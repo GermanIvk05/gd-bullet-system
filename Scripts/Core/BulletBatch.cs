@@ -10,33 +10,29 @@ public struct Bullet
     public float Lifetime;
 }
 
-public class BulletBatch
+public class BulletBatch(
+    Rid space,
+    Shape2D shape,
+    uint collisionLayer,
+    uint collisionMask,
+    IMovementStrategy strategy,
+    DespawnCondition[] despawnConditions
+)
 {
-    private List<Bullet> _bullets = new();
-    private List<Rid> _bodies = new();
-    private Rid _space;
-    private Shape2D _shape;
-    private uint _collisionLayer;
-    private uint _collisionMask;
-    
-    public int Count => _bullets.Count;
-    public IMovementStrategy MovementStrategy { get; set; }
-    public DespawnCondition[] DespawnConditions { get; set; }
-    
+    private readonly List<Bullet> _bullets = [];
+    private readonly List<Rid> _bodies = [];
+    private Rid _space = space;
+    private Shape2D _shape = shape;
+    private uint _collisionLayer = collisionLayer;
+    private uint _collisionMask = collisionMask;
 
-    public BulletBatch(Rid space, Shape2D shape, uint collisionLayer, uint collisionMask, IMovementStrategy strategy, DespawnCondition[] despawnConditions)
-    {
-        _space = space;
-        _shape = shape;
-        _collisionLayer = collisionLayer;
-        _collisionMask = collisionMask;
-        MovementStrategy = strategy;
-        DespawnConditions = despawnConditions;
-    }
+    public int Count => _bullets.Count;
+    public IMovementStrategy MovementStrategy { get; set; } = strategy;
+    public DespawnCondition[] DespawnConditions { get; set; } = despawnConditions;
 
     public void Spawn(Vector2 position, float angle)
     {
-        _bullets.Add(new Bullet { Position = position, Angle = angle });
+        _bullets.Add(new() { Position = position, Angle = angle });
 
         var body = PhysicsServer2D.BodyCreate();
         PhysicsServer2D.BodySetMode(body, PhysicsServer2D.BodyMode.Kinematic);
@@ -47,7 +43,7 @@ public class BulletBatch
 
         var t = new Transform2D(0f, position);
         PhysicsServer2D.BodySetState(body, PhysicsServer2D.BodyState.Transform, t);
-    
+
         _bodies.Add(body);
     }
 
@@ -67,8 +63,13 @@ public class BulletBatch
         {
             ref var bullet = ref span[i];
             bullet.Lifetime += delta;
-            bullet.Position += MovementStrategy.Calculate(bullet.Position, bullet.Angle, bullet.Lifetime, delta);
-            
+            bullet.Position += MovementStrategy.Calculate(
+                bullet.Position,
+                bullet.Angle,
+                bullet.Lifetime,
+                delta
+            );
+
             var t = new Transform2D(0f, bullet.Position);
             PhysicsServer2D.BodySetState(_bodies[i], PhysicsServer2D.BodyState.Transform, t);
 
@@ -81,7 +82,7 @@ public class BulletBatch
                     break;
                 }
             }
-            
+
             if (shouldDespawn)
             {
                 Despawn(i);

@@ -4,10 +4,11 @@ using Godot;
 [GlobalClass]
 public partial class ServerBulletController : BulletController
 {
-    private List<BulletBatch> _batches = new();
+    private readonly List<BulletBatch> _batches = [];
     private Rid _space;
 
-    [Export] public BulletView View;
+    [Export]
+    public BulletView View;
 
     public override void _Ready()
     {
@@ -78,3 +79,4 @@ public partial class ServerBulletController : BulletController
         _batches.Clear();
     }
 }
+

@@ -3,8 +3,11 @@ using Godot;
 [GlobalClass]
 public partial class CirclePattern : BulletPattern
 {
-    [Export] public int BulletCount { get; set; } = 10;
-    [Export] public float Radius { get; set; } = 50f;
+    [Export]
+    public int BulletCount { get; set; } = 10;
+
+    [Export]
+    public float Radius { get; set; } = 50f;
 
     public override SpawnData[] GetSpawnData(float targetAngle = 0f)
     {
@@ -18,9 +21,10 @@ public partial class CirclePattern : BulletPattern
             spawns[i] = new SpawnData
             {
                 Position = Vector2.FromAngle(angle) * Radius,
-                Angle = angle
+                Angle = angle,
             };
         }
         return spawns;
     }
 }
+

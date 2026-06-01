@@ -4,7 +4,7 @@ using Godot;
 [GlobalClass]
 public partial class BulletView : MultiMeshInstance2D
 {
-    private float[] _buffer = Array.Empty<float>();
+    private float[] _buffer = [];
 
     public override void _Ready()
     {
@@ -16,7 +16,8 @@ public partial class BulletView : MultiMeshInstance2D
         UpdateCapacity(positions.Length);
         Multimesh.VisibleInstanceCount = positions.Length;
 
-        if (positions.IsEmpty()) return;
+        if (positions.IsEmpty())
+            return;
 
         int instanceCount = Multimesh.InstanceCount;
         int required = instanceCount * 8;
@@ -46,9 +47,11 @@ public partial class BulletView : MultiMeshInstance2D
         if (count > capacity)
         {
             Multimesh.InstanceCount = Mathf.Max(count, capacity * 2);
-        } else if (count < capacity / 4)
+        }
+        else if (count < capacity / 4)
         {
             Multimesh.InstanceCount = Mathf.Max(count, capacity / 2);
         }
     }
 }
+

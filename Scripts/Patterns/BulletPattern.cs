@@ -11,3 +11,4 @@ public abstract partial class BulletPattern : Resource
 {
     public abstract SpawnData[] GetSpawnData(float targetAngle = 0f);
 }
+

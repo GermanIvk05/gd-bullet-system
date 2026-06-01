@@ -1,21 +1,18 @@
-using Godot;
 using System;
 using System.Collections.Generic;
+using Godot;
 
-public class NodeBulletBatch
+public class NodeBulletBatch(
+    Node containter,
+    IMovementStrategy strategy,
+    DespawnCondition[] despawnConditions
+)
 {
-    private List<BulletNode> _bullets = new();
-    private Node _container;
+    private readonly List<BulletNode> _bullets = [];
+    private Node _container = containter;
 
-    public IMovementStrategy MovementStrategy { get; set; }
-    public DespawnCondition[] DespawnConditions { get; set; }
-
-    public NodeBulletBatch(Node container, IMovementStrategy strategy, DespawnCondition[] despawnConditions)
-    {
-        _container = container;
-        MovementStrategy = strategy;
-        DespawnConditions = despawnConditions;
-    }
+    public IMovementStrategy MovementStrategy { get; set; } = strategy;
+    public DespawnCondition[] DespawnConditions { get; set; } = despawnConditions;
 
     public void Spawn(PackedScene scene, Vector2 position, float angle)
     {
@@ -26,7 +23,10 @@ public class NodeBulletBatch
         _bullets.Add(node);
     }
 
-    public void SpawnBullets(PackedScene scene, ReadOnlySpan<(Vector2 Position, float Angle)> bullets)
+    public void SpawnBullets(
+        PackedScene scene,
+        ReadOnlySpan<(Vector2 Position, float Angle)> bullets
+    )
     {
         foreach (var (position, angle) in bullets)
         {
@@ -40,7 +40,12 @@ public class NodeBulletBatch
         {
             var bullet = _bullets[i];
             bullet.Lifetime += delta;
-            bullet.GlobalPosition += MovementStrategy.Calculate(bullet.GlobalPosition, bullet.Angle, bullet.Lifetime, delta);
+            bullet.GlobalPosition += MovementStrategy.Calculate(
+                bullet.GlobalPosition,
+                bullet.Angle,
+                bullet.Lifetime,
+                delta
+            );
 
             bool shouldDespawn = false;
             foreach (var condition in DespawnConditions)
@@ -70,3 +75,4 @@ public class NodeBulletBatch
         _bullets.Clear();
     }
 }
+

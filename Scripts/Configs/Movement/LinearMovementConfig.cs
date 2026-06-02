@@ -11,11 +11,10 @@ public partial class LinearMovementConfig : MovementConfig
 
 public class LinearMovementStrategy(float speed) : IMovementStrategy
 {
-    private float _speed = speed;
+    private readonly float _speed = speed;
 
     public Vector2 Calculate(Vector2 position, float angle, float lifetime, float delta)
     {
         return Vector2.FromAngle(angle) * _speed * delta;
     }
 }
-

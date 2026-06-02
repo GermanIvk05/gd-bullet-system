@@ -1,19 +1,19 @@
 [gd_scene format=3 uid="uid://cngodeku28avl"]
 
-[ext_resource type="Script" uid="uid://bnexe786n806n" path="res://Main.cs" id="1_ig7tw"]
-[ext_resource type="Script" uid="uid://bj62w7er6en34" path="res://Scripts/Patterns/CirclePattern.cs" id="2_dg77c"]
-[ext_resource type="Script" uid="uid://b4miacwu1v2n3" path="res://Scripts/Configs/BulletConfig.cs" id="2_efxa6"]
-[ext_resource type="Script" uid="uid://cokl8wmu0wf6v" path="res://Scripts/Configs/Spawn/LifetimeDespawnCondition.cs" id="5_ycdy4"]
+[ext_resource type="Script" uid="uid://cd1jn3a1pfwqx" path="res://Main.cs" id="1_ig7tw"]
+[ext_resource type="Script" uid="uid://cd5tat78aq0wd" path="res://Scripts/Patterns/CirclePattern.cs" id="2_dg77c"]
+[ext_resource type="Script" uid="uid://hvukdxl5jr2h" path="res://Scripts/Configs/BulletConfig.cs" id="2_efxa6"]
+[ext_resource type="Script" uid="uid://ythapo4ylssi" path="res://Scripts/Configs/Spawn/LifetimeDespawnCondition.cs" id="5_ycdy4"]
 [ext_resource type="Texture2D" uid="uid://duy55sr53r254" path="res://Assets/bullet_00.png" id="6_vivmo"]
-[ext_resource type="Script" uid="uid://n26qg4fnedjg" path="res://Scripts/Configs/Movement/LinearMovementConfig.cs" id="6_w48qg"]
+[ext_resource type="Script" uid="uid://ckmxk5kyyw6s2" path="res://Scripts/Configs/Movement/LinearMovementConfig.cs" id="6_w48qg"]
 [ext_resource type="Texture2D" uid="uid://b5dc0dx1egv3x" path="res://Assets/bullet_01.png" id="7_2cqfq"]
 [ext_resource type="Texture2D" uid="uid://dwgb8r83yl7w1" path="res://Assets/bullet_02.png" id="8_yaehf"]
 [ext_resource type="Texture2D" uid="uid://dl588gr3j3pvt" path="res://Assets/bullet_03.png" id="9_074og"]
-[ext_resource type="Script" uid="uid://cip3ntm7lci75" path="res://Scripts/Core/ServerBulletController.cs" id="9_w48qg"]
+[ext_resource type="Script" uid="uid://cr4w8dsp56hrv" path="res://Scripts/Core/ServerBulletController.cs" id="9_w48qg"]
 [ext_resource type="Texture2D" uid="uid://b4lsn0vf3jjcb" path="res://Assets/bullet_04.png" id="10_cegan"]
-[ext_resource type="Script" uid="uid://d1bk44fyt2c5q" path="res://Scripts/Core/BulletView.cs" id="11_82xsv"]
-[ext_resource type="Script" uid="uid://q54oi38ub0fn" path="res://Scripts/Configs/Movement/OscillateMovementConfig.cs" id="11_dg77c"]
-[ext_resource type="Script" uid="uid://cwp65yfytx4s0" path="res://Scripts/Core/NodeBulletController.cs" id="13_vivmo"]
+[ext_resource type="Script" uid="uid://dv6v0upo2fxbr" path="res://Scripts/Core/BulletView.cs" id="11_82xsv"]
+[ext_resource type="Script" uid="uid://vcjyoicxip8q" path="res://Scripts/Configs/Movement/CurveMovementConfig.cs" id="11_vivmo"]
+[ext_resource type="Script" uid="uid://cpjjluflc4it0" path="res://Scripts/Core/NodeBulletController.cs" id="13_vivmo"]
 [ext_resource type="PackedScene" uid="uid://csdqql54bnv0h" path="res://Scenes/Bullet.tscn" id="14_vivmo"]
 
 [sub_resource type="Resource" id="Resource_w48qg"]
@@ -43,12 +43,16 @@ frame_4/duration = 1.0
 [sub_resource type="Resource" id="Resource_2cqfq"]
 script = ExtResource("5_ycdy4")
 MaxLifetime = 1.0
-metadata/_custom_type_script = "uid://cokl8wmu0wf6v"
 
-[sub_resource type="Resource" id="Resource_ycdy4"]
-script = ExtResource("11_dg77c")
-ForwardSpeed = 200.0
-metadata/_custom_type_script = "uid://q54oi38ub0fn"
+[sub_resource type="Curve" id="Curve_2cqfq"]
+_limits = [0.99, 500.0, 0.0, 1.0]
+_data = [Vector2(0, 400), nan, -400.0, 1, 1, Vector2(1, 0), -400.0, 200.0, 1, 1]
+point_count = 2
+
+[sub_resource type="Resource" id="Resource_82xsv"]
+script = ExtResource("11_vivmo")
+SpeedCurve = SubResource("Curve_2cqfq")
+metadata/_custom_type_script = "uid://vcjyoicxip8q"
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_074og"]
 radius = 8.0
@@ -56,9 +60,8 @@ radius = 8.0
 [sub_resource type="Resource" id="Resource_vivmo"]
 script = ExtResource("2_efxa6")
 Shape = SubResource("CircleShape2D_074og")
-Movement = SubResource("Resource_ycdy4")
+Movement = SubResource("Resource_82xsv")
 DespawnConditions = [SubResource("Resource_2cqfq")]
-metadata/_custom_type_script = "uid://b4miacwu1v2n3"
 
 [sub_resource type="Resource" id="Resource_yaehf"]
 script = ExtResource("5_ycdy4")
@@ -99,14 +102,12 @@ text = "Attack"
 multimesh = SubResource("MultiMesh_lswn8")
 texture = SubResource("AnimatedTexture_a6jrf")
 script = ExtResource("11_82xsv")
-metadata/_custom_type_script = "uid://d1bk44fyt2c5q"
 
 [node name="ServerBulletController" type="Node2D" parent="." unique_id=1696838808 node_paths=PackedStringArray("View")]
 position = Vector2(832, 320)
 script = ExtResource("9_w48qg")
 View = NodePath("../BulletView")
 Config = SubResource("Resource_vivmo")
-metadata/_custom_type_script = "uid://cip3ntm7lci75"
 
 [node name="NodeBulletController" type="Node2D" parent="." unique_id=1329435429 node_paths=PackedStringArray("_bulletContainer")]
 position = Vector2(320, 320)
@@ -114,6 +115,5 @@ script = ExtResource("13_vivmo")
 _bulletScene = ExtResource("14_vivmo")
 _bulletContainer = NodePath("..")
 Config = SubResource("Resource_cegan")
-metadata/_custom_type_script = "uid://cwp65yfytx4s0"
 
 [connection signal="pressed" from="CanvasLayer/Button" to="." method="OnButtonPressed"]

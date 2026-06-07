@@ -54,7 +54,9 @@ Scripts/
 ├── Patterns/                    ← Spawn pattern definitions
 │   ├── BulletPattern2D.cs       ← Abstract resource: FillBuffer(Span<Matrix3x2>)
 │   ├── CirclePattern2D.cs       ← Full-circle pattern
-│   └── ArcPattern2D.cs          ← Arc/fan pattern
+│   ├── ArcPattern2D.cs          ← Arc/fan pattern
+│   ├── CompositePattern2D.cs    ← Composite pattern applying transformations/delays
+│   └── CompositePatternEntry2D.cs← Resource entry defining child transformations
 
 
 Assets/

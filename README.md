@@ -118,6 +118,18 @@ public partial class SpiralPattern2D : BulletPattern2D
 }
 ```
 
+
+### Composite patterns
+
+The system includes a powerful `CompositePattern2D` which allows you to compose multiple child patterns, applying local transformations and delays to each:
+
+- **Offset**: Translates the child pattern's position.
+- **Rotation**: Rotates the child pattern's angle and layout.
+- **Scale**: Scales the spatial size of the child pattern.
+- **Spawn Delay**: Delays the spawn of the child pattern in seconds (driven by Godot's SceneTree timers).
+
+If a composite pattern and all its children have no delays, they will automatically be batch-spawned in a single zero-allocation draw call for maximum performance.
+
 ## License
 
 MIT

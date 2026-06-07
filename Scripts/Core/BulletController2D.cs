@@ -22,6 +22,11 @@ public partial class BulletController2D : Node2D
 
 	public void SpawnPattern(BulletPattern2D pattern, Godot.Vector2 position, float rotation)
 	{
+		pattern.Spawn(this, position, rotation);
+	}
+
+	public void SpawnPatternImmediate(BulletPattern2D pattern, Godot.Vector2 position, float rotation)
+	{
 		var worldMatrix = BuildWorldMatrix(position, rotation);
 		Span<Matrix3x2> buffer = pattern.BulletCount <= 128
 			? stackalloc Matrix3x2[pattern.BulletCount]

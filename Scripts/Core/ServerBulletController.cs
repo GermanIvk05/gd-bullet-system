@@ -17,22 +17,6 @@ public partial class ServerBulletController : BulletController
 		_space = GetWorld2D().Space;
 	}
 
-	[Obsolete("Use SpawnPattern(BulletPattern2D, ...) instead.")]
-	public override void SpawnPattern(BulletPattern pattern, Godot.Vector2 position, float rotation)
-	{
-		var spawnData = pattern.GetSpawnData(rotation);
-		var bullets = new (Godot.Vector2, float)[spawnData.Length];
-		for (int i = 0; i < spawnData.Length; i++)
-		{
-			bullets[i] = (
-				position + spawnData[i].Position.Rotated(rotation),
-				rotation + spawnData[i].Angle
-			);
-		}
-		var batch = CreateBatch();
-		batch.SpawnBullets(bullets);
-	}
-
 	public override void SpawnPattern(BulletPattern2D pattern, Godot.Vector2 position, float rotation)
 	{
 		var worldMatrix = BuildWorldMatrix(position, rotation);

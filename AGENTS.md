@@ -56,12 +56,9 @@ Scripts/
 │       └── LifetimeDespawnCondition.cs
 │
 ├── Patterns/                    ← Spawn pattern definitions
-│   ├── BulletPattern2D.cs       ← Abstract resource: FillBuffer(Span<Matrix3x2>) [current]
-│   ├── CirclePattern2D.cs       ← Full-circle pattern (new API)
-│   ├── ArcPattern2D.cs          ← Arc/fan pattern (new API)
-│   ├── BulletPattern.cs         ← [DEPRECATED] Abstract resource: GetSpawnData()
-│   ├── CirclePattern.cs         ← [DEPRECATED] Full-circle pattern (old API)
-│   └── ArcPattern.cs            ← [DEPRECATED] Arc/fan pattern (old API)
+│   ├── BulletPattern2D.cs       ← Abstract resource: FillBuffer(Span<Matrix3x2>)
+│   ├── CirclePattern2D.cs       ← Full-circle pattern
+│   └── ArcPattern2D.cs          ← Arc/fan pattern
 
 Scenes/
 └── Bullet.tscn                  ← PackedScene for NodeBulletController (debug path)
@@ -82,7 +79,7 @@ The system provides **two interchangeable controllers** behind the shared abstra
 | `ServerBulletController`   | Production  | Raw `PhysicsServer2D` bodies| `BulletView` (MultiMesh) |
 | `NodeBulletController`     | Debug/Editor| `BulletNode` (Node2D) instances | Godot scene tree       |
 
-Both accept the same `BulletConfig`, `BulletPattern2D` (or deprecated `BulletPattern`), and movement/despawn strategies.
+Both accept the same `BulletConfig`, `BulletPattern2D`, and movement/despawn strategies.
 
 ### Key Design Patterns
 
@@ -157,7 +154,6 @@ When adding new functionality, follow these patterns:
    - Return the number of bullets actually written (may be ≤ `buffer.Length`)
    - The inherited `[Export] BulletCount` property controls the buffer size callers allocate
 
-> **Do NOT extend the deprecated `BulletPattern`** — it allocates arrays and will be removed in a future version.
 
 ---
 
@@ -248,7 +244,7 @@ Returns `true` when a bullet should be removed. Multiple conditions can be compo
 | `Scripts/Configs/`           | `BulletConfig` + movement/despawn resources |
 | `Scripts/Configs/Movement/`  | `MovementConfig` hierarchy + strategies |
 | `Scripts/Configs/Spawn/`     | `DespawnCondition` hierarchy            |
-| `Scripts/Patterns/`          | `BulletPattern2D` hierarchy + deprecated `BulletPattern` |
+| `Scripts/Patterns/`          | `BulletPattern2D` hierarchy            |
 | `Scenes/`                    | Reusable `.tscn` scenes (Bullet node)   |
 | `Assets/`                    | Sprite textures (bullet animation frames) |
 | `.godot/`                    | Godot editor cache (gitignored)         |

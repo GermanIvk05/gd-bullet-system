@@ -14,27 +14,6 @@ public partial class NodeBulletController : BulletController
 
 	private readonly List<NodeBulletBatch> _batches = [];
 
-	[Obsolete("Use SpawnPattern(BulletPattern2D, ...) instead.")]
-	public override void SpawnPattern(BulletPattern pattern, Godot.Vector2 position, float rotation)
-	{
-		var spawnData = pattern.GetSpawnData(rotation);
-		var bullets = new (Godot.Vector2, float)[spawnData.Length];
-		for (int i = 0; i < spawnData.Length; i++)
-		{
-			bullets[i] = (
-				position + spawnData[i].Position.Rotated(rotation),
-				rotation + spawnData[i].Angle
-			);
-		}
-		var batch = new NodeBulletBatch(
-			_bulletContainer,
-			Config.Movement.CreateStrategy(),
-			Config.DespawnConditions
-		);
-		batch.SpawnBullets(_bulletScene, bullets);
-		_batches.Add(batch);
-	}
-
 	public override void SpawnPattern(BulletPattern2D pattern, Godot.Vector2 position, float rotation)
 	{
 		var worldMatrix = BuildWorldMatrix(position, rotation);

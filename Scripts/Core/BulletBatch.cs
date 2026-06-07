@@ -48,15 +48,6 @@ public class BulletBatch(
 		_bodies.Add(body);
 	}
 
-	public void SpawnBullets(ReadOnlySpan<(Godot.Vector2 Position, float Angle)> bullets)
-	{
-		_bullets.Capacity = _bodies.Capacity = _bullets.Count + bullets.Length;
-		foreach (var (position, angle) in bullets)
-		{
-			Spawn(position, angle);
-		}
-	}
-
 	/// <summary>
 	/// Spawns bullets from an array of <see cref="Matrix3x2"/> transforms produced by a
 	/// <see cref="BulletPattern2D"/>. Each matrix encodes position (M31, M32) and

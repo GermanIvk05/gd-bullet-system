@@ -7,9 +7,6 @@ public abstract partial class BulletController : Node2D
 	[Export]
 	public BulletConfig Config;
 
-	[Obsolete("Use SpawnPattern(BulletPattern2D, ...) instead.")]
-	public abstract void SpawnPattern(BulletPattern pattern, Godot.Vector2 position, float rotation);
-
 	public abstract void SpawnPattern(BulletPattern2D pattern, Godot.Vector2 position, float rotation);
 
 	public override void _ExitTree()

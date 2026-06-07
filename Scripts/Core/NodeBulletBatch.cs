@@ -24,17 +24,6 @@ public class NodeBulletBatch(
 		_bullets.Add(node);
 	}
 
-	public void SpawnBullets(
-		PackedScene scene,
-		ReadOnlySpan<(Godot.Vector2 Position, float Angle)> bullets
-	)
-	{
-		foreach (var (position, angle) in bullets)
-		{
-			Spawn(scene, position, angle);
-		}
-	}
-
 	/// <summary>
 	/// Spawns bullets from an array of <see cref="Matrix3x2"/> transforms produced by a
 	/// <see cref="BulletPattern2D"/>. Each matrix encodes position (M31, M32) and

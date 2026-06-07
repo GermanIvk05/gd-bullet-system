@@ -25,4 +25,3 @@ public partial class BulletConfig : Resource
     [Export(PropertyHint.Layers2DPhysics)]
     public uint CollisionMask { get; set; } = 0;
 }
-

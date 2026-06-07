@@ -9,4 +9,3 @@ public partial class LifetimeDespawnCondition : DespawnCondition
     public override bool ShouldDespawn(Vector2 position, float angle, float lifetime) =>
         lifetime >= MaxLifetime;
 }
-

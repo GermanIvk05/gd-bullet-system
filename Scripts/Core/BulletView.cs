@@ -54,4 +54,3 @@ public partial class BulletView : MultiMeshInstance2D
         }
     }
 }
-

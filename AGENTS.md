@@ -100,7 +100,7 @@ Both accept the same `BulletConfig`, `BulletPattern2D`, and movement/despawn str
 | C# files             | PascalCase             | `BulletController.cs`           |
 | Classes              | PascalCase             | `ServerBulletController`        |
 | Interfaces           | `I` prefix + PascalCase| `IMovementStrategy`             |
-| Godot resources      | PascalCase             | `BulletConfig`, `CirclePattern` |
+| Godot resources      | PascalCase             | `BulletConfig`, `CirclePattern2D` |
 | Scenes               | PascalCase `.tscn`     | `Bullet.tscn`                   |
 | Assets               | snake_case             | `bullet_00.png`                 |
 | Directories          | PascalCase             | `Scripts/Core/`, `Configs/Movement/` |

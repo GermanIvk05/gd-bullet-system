@@ -13,7 +13,7 @@ public class BulletBatch(
 	DespawnCondition[] despawnConditions
 )
 {
-	private readonly List<Godot.Vector2> _positions = [];
+	private readonly List<System.Numerics.Vector2> _positions = [];
 	private readonly List<float> _angles = [];
 	private readonly List<float> _lifetimes = [];
 	private readonly List<Rid> _bodies = [];
@@ -26,7 +26,7 @@ public class BulletBatch(
 	public IMovementStrategy MovementStrategy { get; set; } = strategy;
 	public DespawnCondition[] DespawnConditions { get; set; } = despawnConditions;
 
-	public void Spawn(Godot.Vector2 position, float angle)
+	public void Spawn(System.Numerics.Vector2 position, float angle)
 	{
 		_positions.Add(position);
 		_angles.Add(angle);
@@ -39,7 +39,7 @@ public class BulletBatch(
 		PhysicsServer2D.BodySetCollisionLayer(body, _collisionLayer);
 		PhysicsServer2D.BodySetCollisionMask(body, _collisionMask);
 
-		var t = new Transform2D(0f, position);
+		var t = new Transform2D(0f, new Godot.Vector2(position.X, position.Y));
 		PhysicsServer2D.BodySetState(body, PhysicsServer2D.BodyState.Transform, t);
 
 		_bodies.Add(body);
@@ -57,7 +57,7 @@ public class BulletBatch(
 		for (int i = 0; i < count; i++)
 		{
 			ref readonly var m = ref transforms[i];
-			var position = new Godot.Vector2(m.M31, m.M32);
+			var position = new System.Numerics.Vector2(m.M31, m.M32);
 			float angle = MathF.Atan2(m.M12, m.M11);
 			Spawn(position, angle);
 		}
@@ -85,7 +85,7 @@ public class BulletBatch(
 				delta
 			);
 
-			var t = new Transform2D(0f, position);
+			var t = new Transform2D(0f, new Godot.Vector2(position.X, position.Y));
 			PhysicsServer2D.BodySetState(body, PhysicsServer2D.BodyState.Transform, t);
 
 			bool shouldDespawn = false;
@@ -132,8 +132,8 @@ public class BulletBatch(
 		_bodies.Clear();
 	}
 
-	public void CopyPositionsTo(Godot.Vector2[] array, int offset)
+	public ReadOnlySpan<Godot.Vector2> GetPositions()
 	{
-		_positions.CopyTo(array, offset);
+		return MemoryMarshal.Cast<System.Numerics.Vector2, Godot.Vector2>(CollectionsMarshal.AsSpan(_positions));
 	}
 }

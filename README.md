@@ -55,6 +55,9 @@ BulletController2D.SpawnPattern(pattern, GlobalPosition, GlobalRotation);
 ### Custom movement
 
 ```csharp
+using System;
+using System.Numerics;
+
 [GlobalClass]
 public partial class HomingMovementConfig : MovementConfig
 {
@@ -68,10 +71,10 @@ public class HomingMovementStrategy : IMovementStrategy
     private float _speed;
     public HomingMovementStrategy(float speed) => _speed = speed;
 
-    public Vector2 Calculate(Vector2 position, float angle, float lifetime, float delta)
+    public System.Numerics.Vector2 Calculate(System.Numerics.Vector2 position, float angle, float lifetime, float delta)
     {
         // custom logic here
-        return Vector2.FromAngle(angle) * _speed * delta;
+        return new System.Numerics.Vector2(MathF.Cos(angle), MathF.Sin(angle)) * _speed * delta;
     }
 }
 ```
@@ -84,8 +87,8 @@ public partial class OutOfBoundsDespawnCondition : DespawnCondition
 {
     [Export] public Rect2 Bounds { get; set; }
 
-    public override bool ShouldDespawn(Vector2 position, float angle, float lifetime)
-        => !Bounds.HasPoint(position);
+    public override bool ShouldDespawn(System.Numerics.Vector2 position, float angle, float lifetime)
+        => !Bounds.HasPoint(new Godot.Vector2(position.X, position.Y));
 }
 ```
 

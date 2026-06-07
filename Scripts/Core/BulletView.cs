@@ -11,12 +11,12 @@ public partial class BulletView : MultiMeshInstance2D
         Multimesh.CustomAabb = new Aabb(Vector3.One * -1e6f, Vector3.One * 2e6f);
     }
 
-    public void Update(Vector2[] positions)
+    public void Update(ReadOnlySpan<Vector2> positions)
     {
         UpdateCapacity(positions.Length);
         Multimesh.VisibleInstanceCount = positions.Length;
 
-        if (positions.IsEmpty())
+        if (positions.IsEmpty)
             return;
 
         int instanceCount = Multimesh.InstanceCount;

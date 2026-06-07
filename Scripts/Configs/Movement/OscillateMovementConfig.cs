@@ -1,3 +1,4 @@
+using System;
 using Godot;
 
 [GlobalClass]
@@ -23,13 +24,13 @@ public class OscillateMovementStrategy(float forwardSpeed, float oscillateSpeed,
     private float _oscillateSpeed = oscillateSpeed;
     private float _amplitude = amplitude;
 
-    public Vector2 Calculate(Vector2 position, float angle, float lifetime, float delta)
+    public System.Numerics.Vector2 Calculate(System.Numerics.Vector2 position, float angle, float lifetime, float delta)
     {
-        Vector2 forward = Vector2.FromAngle(angle);
-        Vector2 perpendicular = forward.Orthogonal();
+        var forward = new System.Numerics.Vector2(MathF.Cos(angle), MathF.Sin(angle));
+        var perpendicular = new System.Numerics.Vector2(-forward.Y, forward.X);
 
-        float previousSin = Mathf.Sin((lifetime - delta) * _oscillateSpeed) * _amplitude;
-        float currentSin = Mathf.Sin(lifetime * _oscillateSpeed) * _amplitude;
+        float previousSin = MathF.Sin((lifetime - delta) * _oscillateSpeed) * _amplitude;
+        float currentSin = MathF.Sin(lifetime * _oscillateSpeed) * _amplitude;
         return forward * _forwardSpeed * delta + perpendicular * (currentSin - previousSin);
     }
 }

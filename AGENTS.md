@@ -69,8 +69,8 @@ The system runs on the `BulletController2D` production path, which manages bulle
 
 
 - **Data-Driven Composition** — `BulletConfig` composes a `MovementConfig` + array of `DespawnCondition` resources. Everything is editable in the Godot inspector.
-- **Batch Processing** — `BulletBatch` processes all bullets in a tight loop each frame, then uploads a single float buffer to `RenderingServer`.
-- **Zero-Allocation Patterns** — `BulletPattern2D.FillBuffer(Span<Matrix3x2>, Matrix3x2)` fills a caller-provided buffer with world-space transforms, avoiding heap allocations on the spawn path. Small patterns (≤128 bullets) use `stackalloc`.
+- **Batch Processing** — `BulletController2D` maintains a *single* `BulletBatch` for all active bullets, avoiding object creation spam. `BulletBatch` processes bullets in a tightly packed Struct-of-Arrays (SoA) loop each frame.
+- **Zero-Allocation Rendering** — Data is passed to `BulletView` using a zero-allocation `ReadOnlySpan`, and spawn transforms use `stackalloc` via `BulletPattern2D.FillBuffer(Span<Matrix3x2>, Matrix3x2)`.
 
 ---
 
@@ -117,14 +117,14 @@ When adding new functionality, follow these patterns:
    - Add `[GlobalClass]` attribute
    - Implement `CreateStrategy()` → return a new `IMovementStrategy`
 2. Create the corresponding strategy class (can be in the same file or separate):
-   - Implement `IMovementStrategy.Calculate(Vector2 position, float angle, float lifetime, float delta) → Vector2`
+   - Implement `IMovementStrategy.Calculate(System.Numerics.Vector2 position, float angle, float lifetime, float delta) → System.Numerics.Vector2`
 
 ### New Despawn Condition
 
 1. Create `Scripts/Configs/Spawn/YourDespawnCondition.cs`:
    - Extend `DespawnCondition` (abstract `Resource`)
    - Add `[GlobalClass]` attribute
-   - Override `ShouldDespawn(Vector2 position, float angle, float lifetime) → bool`
+   - Override `ShouldDespawn(System.Numerics.Vector2 position, float angle, float lifetime) → bool`
 
 ### New Spawn Pattern
 
@@ -186,7 +186,7 @@ dotnet build "Bullet Controller (GDScript).csproj"
 ### `IMovementStrategy`
 
 ```csharp
-Vector2 Calculate(Vector2 position, float angle, float lifetime, float delta)
+System.Numerics.Vector2 Calculate(System.Numerics.Vector2 position, float angle, float lifetime, float delta)
 ```
 
 Returns the **displacement vector** for a single frame. Called once per bullet per frame.
@@ -210,7 +210,7 @@ Fills the provided buffer with world-space `Matrix3x2` bullet transforms. Return
 ### `DespawnCondition` (abstract)
 
 ```csharp
-abstract bool ShouldDespawn(Vector2 position, float angle, float lifetime)
+abstract bool ShouldDespawn(System.Numerics.Vector2 position, float angle, float lifetime)
 ```
 
 Returns `true` when a bullet should be removed. Multiple conditions can be composed on a single `BulletConfig`.

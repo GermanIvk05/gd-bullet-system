@@ -8,5 +8,5 @@ public abstract partial class MovementConfig : Resource
 
 public interface IMovementStrategy
 {
-    public Vector2 Calculate(Vector2 position, float angle, float lifetime, float delta);
+    public System.Numerics.Vector2 Calculate(System.Numerics.Vector2 position, float angle, float lifetime, float delta);
 }

@@ -1,3 +1,4 @@
+using System;
 using Godot;
 
 [GlobalClass]
@@ -13,8 +14,8 @@ public class LinearMovementStrategy(float speed) : IMovementStrategy
 {
     private readonly float _speed = speed;
 
-    public Vector2 Calculate(Vector2 position, float angle, float lifetime, float delta)
+    public System.Numerics.Vector2 Calculate(System.Numerics.Vector2 position, float angle, float lifetime, float delta)
     {
-        return Vector2.FromAngle(angle) * _speed * delta;
+        return new System.Numerics.Vector2(MathF.Cos(angle), MathF.Sin(angle)) * _speed * delta;
     }
 }

@@ -37,11 +37,8 @@ Scripts/
 ├── Core/                        ← Runtime controllers, batching, rendering
 │   ├── BulletController.cs      ← Abstract base (Node2D): SpawnPattern()
 │   ├── ServerBulletController.cs← Production path: PhysicsServer2D + MultiMesh
-│   ├── NodeBulletController.cs  ← Debug/editor path: scene-tree nodes
 │   ├── BulletBatch.cs           ← Server-side bullet group (physics bodies + transforms)
-│   ├── NodeBulletBatch.cs       ← Node-side bullet group (BulletNode instances)
-│   ├── BulletView.cs            ← MultiMeshInstance2D: uploads transform buffer each frame
-│   └── BulletNode.cs            ← Single bullet as a Node2D (debug path only)
+│   └── BulletView.cs            ← MultiMeshInstance2D: uploads transform buffer each frame
 │
 ├── Configs/                     ← Data-driven configuration resources
 │   ├── BulletConfig.cs          ← Top-level config: Damage, Shape, Movement, DespawnConditions, collision layers
@@ -59,8 +56,6 @@ Scripts/
 │   ├── CirclePattern.cs
 │   └── ArcPattern.cs
 
-Scenes/
-└── Bullet.tscn                  ← PackedScene for NodeBulletController (debug path)
 
 Assets/
 └── bullet_00..04.png            ← Animated bullet sprite frames
@@ -69,16 +64,10 @@ main.tscn                       ← Main scene: wires both controllers + UI butt
 Main.cs                          ← Entry point: fires SpawnPattern on button press
 ```
 
-### Dual-Controller Design
+### Controller Design
 
-The system provides **two interchangeable controllers** behind the shared abstract `BulletController`:
+The system runs on the `ServerBulletController` production path, which manages bullets as raw physics bodies via `PhysicsServer2D` and renders them with `BulletView` (`MultiMeshInstance2D`).
 
-| Controller                 | Path        | Bullets Managed As          | Rendering                |
-| -------------------------- | ----------- | --------------------------- | ------------------------ |
-| `ServerBulletController`   | Production  | Raw `PhysicsServer2D` bodies| `BulletView` (MultiMesh) |
-| `NodeBulletController`     | Debug/Editor| `BulletNode` (Node2D) instances | Godot scene tree       |
-
-Both accept the same `BulletConfig`, `BulletPattern`, and movement/despawn strategies.
 
 ### Key Design Patterns
 
@@ -167,7 +156,6 @@ When adding new functionality, follow these patterns:
 
 6. **Use `PhysicsServer2D` and `RenderingServer` APIs in the server path** — do not add scene-tree nodes in `ServerBulletController` or `BulletBatch`. The entire point of the server path is zero scene-tree overhead.
 
-7. **Preserve the dual-controller symmetry** — any feature added to `ServerBulletController` should have a corresponding implementation in `NodeBulletController` (and vice versa), maintaining the shared `BulletController` interface.
 
 8. **Movement strategies must be stateless or per-bullet** — `IMovementStrategy.Calculate()` receives all state as parameters. Do not store mutable global state in strategy instances.
 
@@ -239,6 +227,5 @@ Returns `true` when a bullet should be removed. Multiple conditions can be compo
 | `Scripts/Configs/Movement/`  | `MovementConfig` hierarchy + strategies |
 | `Scripts/Configs/Spawn/`     | `DespawnCondition` hierarchy            |
 | `Scripts/Patterns/`          | `BulletPattern` hierarchy               |
-| `Scenes/`                    | Reusable `.tscn` scenes (Bullet node)   |
 | `Assets/`                    | Sprite textures (bullet animation frames) |
 | `.godot/`                    | Godot editor cache (gitignored)         |

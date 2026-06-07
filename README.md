@@ -4,21 +4,14 @@ A high-performance bullet system for **Godot 4 (C#)** designed for bullet hell-s
 
 ## Architecture
 
-The system has two implementations behind a shared interface:
+The system consists of:
 
-**`ServerBulletController`** — production path. Manages bullets as raw physics bodies via `PhysicsServer2D` with no scene tree overhead. Renders using `BulletView` (`MultiMeshInstance2D`) with a single batched `RenderingServer` buffer upload per frame.
-
-**`NodeBulletController`** — debug/editor path. Each bullet is a `BulletNode` (`Node2D`) in the scene tree, making it easy to inspect individual bullets at runtime.
-
-Both controllers share the same `BulletConfig`, movement strategies, despawn conditions, and spawn patterns.
+**`BulletController2D`** — manages bullets as raw physics bodies via `PhysicsServer2D` with no scene tree overhead. Renders using `BulletView` (`MultiMeshInstance2D`) with a single batched `RenderingServer` buffer upload per frame.
 
 ```
-BulletController (abstract)
-├── ServerBulletController   ← physics server + multimesh rendering
-└── NodeBulletController     ← scene tree nodes
+BulletController2D           ← physics server + multimesh rendering
 
 BulletBatch                  ← manages a group of bullets (server path)
-NodeBulletBatch              ← manages a group of bullets (node path)
 
 BulletConfig                 ← exported resource: shape, damage, movement, despawn, collision
 BulletPattern2D (abstract)   ← defines zero-allocation spawn transform buffers
@@ -43,18 +36,18 @@ DespawnCondition (abstract)  ← defines when a bullet should be removed
 
 ### Setup
 
-1. Add a `ServerBulletController` or `NodeBulletController` node to your scene.
+1. Add a `BulletController2D` node to your scene.
 2. Create a `BulletConfig` resource and assign it to the controller's `Config` export:
    - Set a `Shape2D` for collision
    - Assign a `MovementConfig` (e.g. `LinearMovementConfig`)
    - Add one or more `DespawnCondition` resources (e.g. `LifetimeDespawnCondition`)
    - Set collision layer and mask as needed
-3. For `ServerBulletController`, assign a `BulletView` (`MultiMeshInstance2D`) to the `View` export.
+3. Assign a `BulletView` (`MultiMeshInstance2D`) to the `View` export.
 4. Create a `BulletPattern2D` resource (e.g. `CirclePattern2D` or `ArcPattern2D`).
 5. Call `SpawnPattern` to fire:
 
 ```csharp
-BulletController.SpawnPattern(pattern, GlobalPosition, GlobalRotation);
+BulletController2D.SpawnPattern(pattern, GlobalPosition, GlobalRotation);
 ```
 
 ## Extending

@@ -5,16 +5,13 @@
 [ext_resource type="Script" uid="uid://hvukdxl5jr2h" path="res://Scripts/Configs/BulletConfig.cs" id="2_efxa6"]
 [ext_resource type="Script" uid="uid://ythapo4ylssi" path="res://Scripts/Configs/Spawn/LifetimeDespawnCondition.cs" id="5_ycdy4"]
 [ext_resource type="Texture2D" uid="uid://duy55sr53r254" path="res://Assets/bullet_00.png" id="6_vivmo"]
-[ext_resource type="Script" uid="uid://ckmxk5kyyw6s2" path="res://Scripts/Configs/Movement/LinearMovementConfig.cs" id="6_w48qg"]
 [ext_resource type="Texture2D" uid="uid://b5dc0dx1egv3x" path="res://Assets/bullet_01.png" id="7_2cqfq"]
 [ext_resource type="Texture2D" uid="uid://dwgb8r83yl7w1" path="res://Assets/bullet_02.png" id="8_yaehf"]
 [ext_resource type="Texture2D" uid="uid://dl588gr3j3pvt" path="res://Assets/bullet_03.png" id="9_074og"]
-[ext_resource type="Script" uid="uid://b84uhftypw62o" path="res://Scripts/Core/ServerBulletController.cs" id="9_w48qg"]
+[ext_resource type="Script" uid="uid://c2hmkbauuh1mw" path="res://Scripts/Core/BulletController2D.cs" id="9_dg77c"]
 [ext_resource type="Texture2D" uid="uid://b4lsn0vf3jjcb" path="res://Assets/bullet_04.png" id="10_cegan"]
 [ext_resource type="Script" uid="uid://dv6v0upo2fxbr" path="res://Scripts/Core/BulletView.cs" id="11_82xsv"]
-[ext_resource type="Script" uid="uid://vcjyoicxip8q" path="res://Scripts/Configs/Movement/CurveMovementConfig.cs" id="11_vivmo"]
-[ext_resource type="Script" uid="uid://cxttrhol48lvd" path="res://Scripts/Core/NodeBulletController.cs" id="13_vivmo"]
-[ext_resource type="PackedScene" uid="uid://csdqql54bnv0h" path="res://Scenes/Bullet.tscn" id="14_vivmo"]
+[ext_resource type="Script" uid="uid://ckmxk5kyyw6s2" path="res://Scripts/Configs/Movement/LinearMovementConfig.cs" id="11_ycdy4"]
 
 [sub_resource type="Resource" id="Resource_getpj"]
 script = ExtResource("2_dg77c")
@@ -39,49 +36,29 @@ frame_3/duration = 1.0
 frame_4/texture = ExtResource("10_cegan")
 frame_4/duration = 1.0
 
-[sub_resource type="Resource" id="Resource_2cqfq"]
+[sub_resource type="Resource" id="Resource_w48qg"]
 script = ExtResource("5_ycdy4")
 MaxLifetime = 1.0
-
-[sub_resource type="Curve" id="Curve_2cqfq"]
-_limits = [0.99, 500.0, 0.0, 1.0]
-_data = [Vector2(0, 400), nan, -400.0, 1, 1, Vector2(1, 0), -400.0, 200.0, 1, 1]
-point_count = 2
-
-[sub_resource type="Resource" id="Resource_82xsv"]
-script = ExtResource("11_vivmo")
-SpeedCurve = SubResource("Curve_2cqfq")
-metadata/_custom_type_script = "uid://vcjyoicxip8q"
-
-[sub_resource type="CircleShape2D" id="CircleShape2D_074og"]
-radius = 8.0
+metadata/_custom_type_script = "uid://ythapo4ylssi"
 
 [sub_resource type="Resource" id="Resource_vivmo"]
-script = ExtResource("2_efxa6")
-Shape = SubResource("CircleShape2D_074og")
-Movement = SubResource("Resource_82xsv")
-DespawnConditions = [SubResource("Resource_2cqfq")]
+script = ExtResource("11_ycdy4")
+Speed = 200.0
+metadata/_custom_type_script = "uid://ckmxk5kyyw6s2"
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_2cqfq"]
+radius = 8.0
 
 [sub_resource type="Resource" id="Resource_yaehf"]
-script = ExtResource("5_ycdy4")
-MaxLifetime = 1.0
-metadata/_custom_type_script = "uid://cokl8wmu0wf6v"
-
-[sub_resource type="Resource" id="Resource_074og"]
-script = ExtResource("6_w48qg")
-Speed = 200.0
-metadata/_custom_type_script = "uid://n26qg4fnedjg"
-
-[sub_resource type="Resource" id="Resource_cegan"]
 script = ExtResource("2_efxa6")
-Movement = SubResource("Resource_074og")
-DespawnConditions = [SubResource("Resource_yaehf")]
-metadata/_custom_type_script = "uid://b4miacwu1v2n3"
+Shape = SubResource("CircleShape2D_2cqfq")
+Movement = SubResource("Resource_vivmo")
+DespawnConditions = [SubResource("Resource_w48qg")]
+metadata/_custom_type_script = "uid://hvukdxl5jr2h"
 
-[node name="Main" type="Node2D" unique_id=400808997 node_paths=PackedStringArray("ServerController", "NodeController")]
+[node name="Main" type="Node2D" unique_id=400808997 node_paths=PackedStringArray("ServerController")]
 script = ExtResource("1_ig7tw")
-ServerController = NodePath("ServerBulletController")
-NodeController = NodePath("NodeBulletController")
+ServerController = NodePath("BulletController2D")
 Pattern2D = SubResource("Resource_getpj")
 
 [node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=1218908650]
@@ -102,17 +79,10 @@ multimesh = SubResource("MultiMesh_lswn8")
 texture = SubResource("AnimatedTexture_a6jrf")
 script = ExtResource("11_82xsv")
 
-[node name="ServerBulletController" type="Node2D" parent="." unique_id=1696838808 node_paths=PackedStringArray("View")]
-position = Vector2(832, 320)
-script = ExtResource("9_w48qg")
+[node name="BulletController2D" type="Node2D" parent="." unique_id=1696838808 node_paths=PackedStringArray("View")]
+position = Vector2(576, 320)
+script = ExtResource("9_dg77c")
+Config = SubResource("Resource_yaehf")
 View = NodePath("../BulletView")
-Config = SubResource("Resource_vivmo")
-
-[node name="NodeBulletController" type="Node2D" parent="." unique_id=1329435429 node_paths=PackedStringArray("_bulletContainer")]
-position = Vector2(320, 320)
-script = ExtResource("13_vivmo")
-_bulletScene = ExtResource("14_vivmo")
-_bulletContainer = NodePath("..")
-Config = SubResource("Resource_cegan")
 
 [connection signal="pressed" from="CanvasLayer/Button" to="." method="OnButtonPressed"]

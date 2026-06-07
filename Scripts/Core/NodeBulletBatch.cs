@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Numerics;
 using Godot;
 
 public class NodeBulletBatch(
@@ -14,7 +15,7 @@ public class NodeBulletBatch(
     public IMovementStrategy MovementStrategy { get; set; } = strategy;
     public DespawnCondition[] DespawnConditions { get; set; } = despawnConditions;
 
-    public void Spawn(PackedScene scene, Vector2 position, float angle)
+    public void Spawn(PackedScene scene, Godot.Vector2 position, float angle)
     {
         var node = scene.Instantiate<BulletNode>();
         node.GlobalPosition = position;
@@ -23,13 +24,18 @@ public class NodeBulletBatch(
         _bullets.Add(node);
     }
 
-    public void SpawnBullets(
-        PackedScene scene,
-        ReadOnlySpan<(Vector2 Position, float Angle)> bullets
-    )
+    /// <summary>
+    /// Spawns bullets from an array of <see cref="Matrix3x2"/> transforms produced by a
+    /// <see cref="BulletPattern2D"/>. Each matrix encodes position (M31, M32) and
+    /// rotation (via M11, M12).
+    /// </summary>
+    public void SpawnBullets(PackedScene scene, ReadOnlySpan<Matrix3x2> transforms, int count)
     {
-        foreach (var (position, angle) in bullets)
+        for (int i = 0; i < count; i++)
         {
+            ref readonly var m = ref transforms[i];
+            var position = new Godot.Vector2(m.M31, m.M32);
+            float angle = MathF.Atan2(m.M12, m.M11);
             Spawn(scene, position, angle);
         }
     }
@@ -75,4 +81,3 @@ public class NodeBulletBatch(
         _bullets.Clear();
     }
 }
-

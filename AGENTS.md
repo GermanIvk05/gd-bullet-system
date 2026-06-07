@@ -26,7 +26,8 @@
 - **Godot.NET.Sdk 4.6.3** — the MSBuild SDK that bridges C# ↔ Godot.
 - **PhysicsServer2D** — direct server API used for kinematic bullet bodies (no scene-tree nodes in production path).
 - **RenderingServer / MultiMeshInstance2D** — batched rendering via `MultimeshSetBuffer` for thousands of bullets in a single draw call.
-- **Godot Resource system** — all configuration (`BulletConfig`, `MovementConfig`, `DespawnCondition`, `BulletPattern`) is data-driven via exported `Resource` subclasses.
+- **Godot Resource system** — all configuration (`BulletConfig`, `MovementConfig`, `DespawnCondition`, `BulletPattern2D`) is data-driven via exported `Resource` subclasses.
+- **System.Numerics** — `Matrix3x2` is used in the pattern system for high-performance, SIMD-friendly 2D affine transforms.
 
 ---
 
@@ -55,9 +56,9 @@ Scripts/
 │       └── LifetimeDespawnCondition.cs
 │
 ├── Patterns/                    ← Spawn pattern definitions
-│   ├── BulletPattern.cs         ← Abstract resource: GetSpawnData()
-│   ├── CirclePattern.cs
-│   └── ArcPattern.cs
+│   ├── BulletPattern2D.cs       ← Abstract resource: FillBuffer(Span<Matrix3x2>)
+│   ├── CirclePattern2D.cs       ← Full-circle pattern
+│   └── ArcPattern2D.cs          ← Arc/fan pattern
 
 Scenes/
 └── Bullet.tscn                  ← PackedScene for NodeBulletController (debug path)
@@ -78,7 +79,7 @@ The system provides **two interchangeable controllers** behind the shared abstra
 | `ServerBulletController`   | Production  | Raw `PhysicsServer2D` bodies| `BulletView` (MultiMesh) |
 | `NodeBulletController`     | Debug/Editor| `BulletNode` (Node2D) instances | Godot scene tree       |
 
-Both accept the same `BulletConfig`, `BulletPattern`, and movement/despawn strategies.
+Both accept the same `BulletConfig`, `BulletPattern2D`, and movement/despawn strategies.
 
 ### Key Design Patterns
 
@@ -86,6 +87,7 @@ Both accept the same `BulletConfig`, `BulletPattern`, and movement/despawn strat
 - **Template Method** — `BulletController` defines the abstract `SpawnPattern()` contract; subclasses implement the actual spawning.
 - **Data-Driven Composition** — `BulletConfig` composes a `MovementConfig` + array of `DespawnCondition` resources. Everything is editable in the Godot inspector.
 - **Batch Processing** — `BulletBatch` processes all bullets in a tight loop each frame, then uploads a single float buffer to `RenderingServer`.
+- **Zero-Allocation Patterns** — `BulletPattern2D.FillBuffer(Span<Matrix3x2>, Matrix3x2)` fills a caller-provided buffer with world-space transforms, avoiding heap allocations on the spawn path. Small patterns (≤128 bullets) use `stackalloc`.
 
 ---
 
@@ -98,7 +100,7 @@ Both accept the same `BulletConfig`, `BulletPattern`, and movement/despawn strat
 | C# files             | PascalCase             | `BulletController.cs`           |
 | Classes              | PascalCase             | `ServerBulletController`        |
 | Interfaces           | `I` prefix + PascalCase| `IMovementStrategy`             |
-| Godot resources      | PascalCase             | `BulletConfig`, `CirclePattern` |
+| Godot resources      | PascalCase             | `BulletConfig`, `CirclePattern2D` |
 | Scenes               | PascalCase `.tscn`     | `Bullet.tscn`                   |
 | Assets               | snake_case             | `bullet_00.png`                 |
 | Directories          | PascalCase             | `Scripts/Core/`, `Configs/Movement/` |
@@ -143,11 +145,15 @@ When adding new functionality, follow these patterns:
 
 ### New Spawn Pattern
 
-1. Create `Scripts/Patterns/YourPattern.cs`:
-   - Extend `BulletPattern` (abstract `Resource`)
+1. Create `Scripts/Patterns/YourPattern2D.cs`:
+   - Extend `BulletPattern2D` (abstract `Resource`)
    - Add `[GlobalClass]` attribute
-   - Override `GetSpawnData(float targetAngle) → SpawnData[]`
-   - `SpawnData` is a struct with `Position` (Vector2) and `Angle` (float)
+   - Override `FillBuffer(Span<Matrix3x2> buffer, Matrix3x2 worldMatrix) → int`
+   - Use `System.Numerics.Vector2` and `Matrix3x2` — not `Godot.Vector2`
+   - Each entry in `buffer` is a world-space 2D affine transform: position in `(M31, M32)`, rotation via `Matrix3x2.CreateRotation()`
+   - Return the number of bullets actually written (may be ≤ `buffer.Length`)
+   - The inherited `[Export] BulletCount` property controls the buffer size callers allocate
+
 
 ---
 
@@ -206,18 +212,18 @@ Returns the **displacement vector** for a single frame. Called once per bullet p
 ### `BulletController` (abstract)
 
 ```csharp
-abstract void SpawnPattern(BulletPattern pattern, Vector2 position, float rotation)
+abstract void SpawnPattern(BulletPattern2D pattern, Vector2 position, float rotation)
 ```
 
-Spawns a batch of bullets according to the given pattern at the specified origin.
+Spawns a batch of bullets according to the given pattern at the specified origin. Builds a `Matrix3x2` world matrix internally and delegates to `FillBuffer`.
 
-### `BulletPattern` (abstract)
+### `BulletPattern2D` (abstract)
 
 ```csharp
-abstract SpawnData[] GetSpawnData(float targetAngle = 0f)
+abstract int FillBuffer(Span<Matrix3x2> buffer, Matrix3x2 worldMatrix)
 ```
 
-Returns an array of spawn positions and angles relative to the pattern origin.
+Fills the provided buffer with world-space `Matrix3x2` bullet transforms. Returns the number of bullets written. Each matrix encodes rotation and translation for one bullet.
 
 ### `DespawnCondition` (abstract)
 
@@ -238,7 +244,7 @@ Returns `true` when a bullet should be removed. Multiple conditions can be compo
 | `Scripts/Configs/`           | `BulletConfig` + movement/despawn resources |
 | `Scripts/Configs/Movement/`  | `MovementConfig` hierarchy + strategies |
 | `Scripts/Configs/Spawn/`     | `DespawnCondition` hierarchy            |
-| `Scripts/Patterns/`          | `BulletPattern` hierarchy               |
+| `Scripts/Patterns/`          | `BulletPattern2D` hierarchy            |
 | `Scenes/`                    | Reusable `.tscn` scenes (Bullet node)   |
 | `Assets/`                    | Sprite textures (bullet animation frames) |
 | `.godot/`                    | Godot editor cache (gitignored)         |

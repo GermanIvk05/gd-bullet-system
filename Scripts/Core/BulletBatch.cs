@@ -1,11 +1,12 @@
 using System;
 using System.Collections.Generic;
+using System.Numerics;
 using System.Runtime.InteropServices;
 using Godot;
 
 public struct Bullet
 {
-    public Vector2 Position;
+    public Godot.Vector2 Position;
     public float Angle;
     public float Lifetime;
 }
@@ -30,7 +31,7 @@ public class BulletBatch(
     public IMovementStrategy MovementStrategy { get; set; } = strategy;
     public DespawnCondition[] DespawnConditions { get; set; } = despawnConditions;
 
-    public void Spawn(Vector2 position, float angle)
+    public void Spawn(Godot.Vector2 position, float angle)
     {
         _bullets.Add(new() { Position = position, Angle = angle });
 
@@ -47,11 +48,19 @@ public class BulletBatch(
         _bodies.Add(body);
     }
 
-    public void SpawnBullets(ReadOnlySpan<(Vector2 Position, float Angle)> bullets)
+    /// <summary>
+    /// Spawns bullets from an array of <see cref="Matrix3x2"/> transforms produced by a
+    /// <see cref="BulletPattern2D"/>. Each matrix encodes position (M31, M32) and
+    /// rotation (via M11, M12).
+    /// </summary>
+    public void SpawnBullets(ReadOnlySpan<Matrix3x2> transforms, int count)
     {
-        _bullets.Capacity = _bodies.Capacity = _bullets.Count + bullets.Length;
-        foreach (var (position, angle) in bullets)
+        _bullets.Capacity = _bodies.Capacity = _bullets.Count + count;
+        for (int i = 0; i < count; i++)
         {
+            ref readonly var m = ref transforms[i];
+            var position = new Godot.Vector2(m.M31, m.M32);
+            float angle = MathF.Atan2(m.M12, m.M11);
             Spawn(position, angle);
         }
     }
@@ -109,7 +118,7 @@ public class BulletBatch(
         _bodies.Clear();
     }
 
-    public void CopyPositionsTo(Vector2[] array, int offset)
+    public void CopyPositionsTo(Godot.Vector2[] array, int offset)
     {
         var span = CollectionsMarshal.AsSpan(_bullets);
         for (int i = 0; i < span.Length; i++)

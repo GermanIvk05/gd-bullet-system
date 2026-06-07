@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://cngodeku28avl"]
 
 [ext_resource type="Script" uid="uid://cd1jn3a1pfwqx" path="res://Main.cs" id="1_ig7tw"]
-[ext_resource type="Script" uid="uid://cd5tat78aq0wd" path="res://Scripts/Patterns/CirclePattern.cs" id="2_dg77c"]
+[ext_resource type="Script" uid="uid://cd5tat78aq0wd" path="res://Scripts/Patterns/CirclePattern2D.cs" id="2_dg77c"]
 [ext_resource type="Script" uid="uid://hvukdxl5jr2h" path="res://Scripts/Configs/BulletConfig.cs" id="2_efxa6"]
 [ext_resource type="Script" uid="uid://ythapo4ylssi" path="res://Scripts/Configs/Spawn/LifetimeDespawnCondition.cs" id="5_ycdy4"]
 [ext_resource type="Texture2D" uid="uid://duy55sr53r254" path="res://Assets/bullet_00.png" id="6_vivmo"]
@@ -9,17 +9,16 @@
 [ext_resource type="Texture2D" uid="uid://b5dc0dx1egv3x" path="res://Assets/bullet_01.png" id="7_2cqfq"]
 [ext_resource type="Texture2D" uid="uid://dwgb8r83yl7w1" path="res://Assets/bullet_02.png" id="8_yaehf"]
 [ext_resource type="Texture2D" uid="uid://dl588gr3j3pvt" path="res://Assets/bullet_03.png" id="9_074og"]
-[ext_resource type="Script" uid="uid://cr4w8dsp56hrv" path="res://Scripts/Core/ServerBulletController.cs" id="9_w48qg"]
+[ext_resource type="Script" uid="uid://b84uhftypw62o" path="res://Scripts/Core/ServerBulletController.cs" id="9_w48qg"]
 [ext_resource type="Texture2D" uid="uid://b4lsn0vf3jjcb" path="res://Assets/bullet_04.png" id="10_cegan"]
 [ext_resource type="Script" uid="uid://dv6v0upo2fxbr" path="res://Scripts/Core/BulletView.cs" id="11_82xsv"]
 [ext_resource type="Script" uid="uid://vcjyoicxip8q" path="res://Scripts/Configs/Movement/CurveMovementConfig.cs" id="11_vivmo"]
-[ext_resource type="Script" uid="uid://cpjjluflc4it0" path="res://Scripts/Core/NodeBulletController.cs" id="13_vivmo"]
+[ext_resource type="Script" uid="uid://cxttrhol48lvd" path="res://Scripts/Core/NodeBulletController.cs" id="13_vivmo"]
 [ext_resource type="PackedScene" uid="uid://csdqql54bnv0h" path="res://Scenes/Bullet.tscn" id="14_vivmo"]
 
-[sub_resource type="Resource" id="Resource_w48qg"]
+[sub_resource type="Resource" id="Resource_getpj"]
 script = ExtResource("2_dg77c")
-BulletCount = 20
-metadata/_custom_type_script = "uid://bj62w7er6en34"
+metadata/_custom_type_script = "uid://cd5tat78aq0wd"
 
 [sub_resource type="QuadMesh" id="QuadMesh_0odxb"]
 size = Vector2(32, 32)
@@ -83,7 +82,7 @@ metadata/_custom_type_script = "uid://b4miacwu1v2n3"
 script = ExtResource("1_ig7tw")
 ServerController = NodePath("ServerBulletController")
 NodeController = NodePath("NodeBulletController")
-Pattern = SubResource("Resource_w48qg")
+Pattern2D = SubResource("Resource_getpj")
 
 [node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=1218908650]
 

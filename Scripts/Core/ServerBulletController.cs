@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using System.Numerics;
 using Godot;
 
 [GlobalClass]
@@ -15,19 +17,22 @@ public partial class ServerBulletController : BulletController
         _space = GetWorld2D().Space;
     }
 
-    public override void SpawnPattern(BulletPattern pattern, Vector2 position, float rotation)
+    public override void SpawnPattern(
+        BulletPattern2D pattern,
+        Godot.Vector2 position,
+        float rotation
+    )
     {
-        var spawnData = pattern.GetSpawnData(rotation);
-        var bullets = new (Vector2, float)[spawnData.Length];
-        for (int i = 0; i < spawnData.Length; i++)
-        {
-            bullets[i] = (
-                position + spawnData[i].Position.Rotated(rotation),
-                rotation + spawnData[i].Angle
-            );
-        }
+        var worldMatrix = BuildWorldMatrix(position, rotation);
+        Span<Matrix3x2> buffer =
+            pattern.BulletCount <= 128
+                ? stackalloc Matrix3x2[pattern.BulletCount]
+                : new Matrix3x2[pattern.BulletCount];
+
+        int count = pattern.FillBuffer(buffer, worldMatrix);
+
         var batch = CreateBatch();
-        batch.SpawnBullets(bullets);
+        batch.SpawnBullets(buffer, count);
     }
 
     private BulletBatch CreateBatch()
@@ -53,14 +58,14 @@ public partial class ServerBulletController : BulletController
         View.Update(GetPositions());
     }
 
-    private Vector2[] GetPositions()
+    private Godot.Vector2[] GetPositions()
     {
         int total = 0;
         foreach (var batch in _batches)
         {
             total += batch.Count;
         }
-        var positions = new Vector2[total];
+        var positions = new Godot.Vector2[total];
         int offset = 0;
         foreach (var batch in _batches)
         {
@@ -79,4 +84,3 @@ public partial class ServerBulletController : BulletController
         _batches.Clear();
     }
 }
-

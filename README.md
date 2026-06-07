@@ -21,7 +21,7 @@ BulletBatch                  ← manages a group of bullets (server path)
 NodeBulletBatch              ← manages a group of bullets (node path)
 
 BulletConfig                 ← exported resource: shape, damage, movement, despawn, collision
-BulletPattern (abstract)     ← defines spawn positions and angles
+BulletPattern2D (abstract)   ← defines zero-allocation spawn transform buffers
 MovementConfig (abstract)    ← defines per-frame movement behaviour
 DespawnCondition (abstract)  ← defines when a bullet should be removed
 ```
@@ -32,7 +32,7 @@ DespawnCondition (abstract)  ← defines when a bullet should be removed
 - **PhysicsServer2D** kinematic bodies for collision without scene tree nodes
 - **Strategy pattern** for movement — swap between `LinearMovementConfig`, `OscillateMovementConfig`, or write your own
 - **Composable despawn conditions** — combine multiple conditions per bullet type (e.g. lifetime + out-of-bounds)
-- **Pluggable spawn patterns** — `CirclePattern`, `ArcPattern`, or implement `BulletPattern` for custom layouts
+- **Pluggable spawn patterns** — `CirclePattern2D`, `ArcPattern2D`, or implement `BulletPattern2D` for custom layouts
 - **Data-driven configuration** — everything is a Godot `Resource`, editable in the inspector
 
 ## Getting Started
@@ -50,7 +50,7 @@ DespawnCondition (abstract)  ← defines when a bullet should be removed
    - Add one or more `DespawnCondition` resources (e.g. `LifetimeDespawnCondition`)
    - Set collision layer and mask as needed
 3. For `ServerBulletController`, assign a `BulletView` (`MultiMeshInstance2D`) to the `View` export.
-4. Create a `BulletPattern` resource (e.g. `CirclePattern` or `ArcPattern`).
+4. Create a `BulletPattern2D` resource (e.g. `CirclePattern2D` or `ArcPattern2D`).
 5. Call `SpawnPattern` to fire:
 
 ```csharp
@@ -99,21 +99,28 @@ public partial class OutOfBoundsDespawnCondition : DespawnCondition
 ### Custom pattern
 
 ```csharp
-[GlobalClass]
-public partial class SpiralPattern : BulletPattern
-{
-    [Export] public int BulletCount { get; set; } = 12;
+using System;
+using System.Numerics;
 
-    public override SpawnData[] GetSpawnData(float targetAngle = 0f)
+[Godot.GlobalClass]
+public partial class SpiralPattern2D : BulletPattern2D
+{
+    [Godot.Export] public float Radius { get; set; } = 10f;
+
+    public override int FillBuffer(Span<Matrix3x2> buffer, Matrix3x2 worldMatrix)
     {
-        var spawns = new SpawnData[BulletCount];
-        float step = Mathf.Tau / BulletCount;
-        for (int i = 0; i < BulletCount; i++)
+        int count = Math.Min(BulletCount, buffer.Length);
+        if (count == 0) return 0;
+
+        float step = MathF.Tau / count;
+        for (int i = 0; i < count; i++)
         {
-            float angle = targetAngle + i * step;
-            spawns[i] = new SpawnData { Position = Vector2.Zero, Angle = angle };
+            float angle = i * step;
+            var localPos = new Vector2(MathF.Cos(angle), MathF.Sin(angle)) * (Radius * (i / (float)count));
+            var worldPos = Vector2.Transform(localPos, worldMatrix);
+            buffer[i] = Matrix3x2.CreateRotation(angle) * Matrix3x2.CreateTranslation(worldPos);
         }
-        return spawns;
+        return count;
     }
 }
 ```

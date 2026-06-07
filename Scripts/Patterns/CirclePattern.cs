@@ -1,6 +1,8 @@
+using System;
 using Godot;
 
 [GlobalClass]
+[Obsolete("Use CirclePattern2D instead.")]
 public partial class CirclePattern : BulletPattern
 {
     [Export]

@@ -2,6 +2,7 @@ using System;
 using Godot;
 
 [GlobalClass]
+[Obsolete("Use ArcPattern2D instead.")]
 public partial class ArcPattern : BulletPattern
 {
     [Export]

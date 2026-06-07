@@ -5,8 +5,21 @@ using Godot;
 [GlobalClass]
 public abstract partial class BulletPattern2D : Resource
 {
-    [Export]
-    public int BulletCount { get; set; } = 10;
+	[Export]
+	public virtual int BulletCount { get; set; } = 10;
+
+    /// <summary>
+    /// Returns true if this pattern or any of its children have delayed spawns.
+    /// </summary>
+    public virtual bool HasDelays => false;
+
+    /// <summary>
+    /// Spawns the pattern using the provided controller.
+    /// </summary>
+    public virtual void Spawn(BulletController2D controller, Godot.Vector2 position, float rotation)
+    {
+        controller.SpawnPatternImmediate(this, position, rotation);
+    }
 
     /// <summary>
     /// Fills the provided buffer with bullet transforms relative to the given world matrix.

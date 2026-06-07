@@ -6,11 +6,10 @@ A high-performance bullet system for **Godot 4 (C#)** designed for bullet hell-s
 
 The system consists of:
 
-**`ServerBulletController`** — manages bullets as raw physics bodies via `PhysicsServer2D` with no scene tree overhead. Renders using `BulletView` (`MultiMeshInstance2D`) with a single batched `RenderingServer` buffer upload per frame.
+**`BulletController2D`** — manages bullets as raw physics bodies via `PhysicsServer2D` with no scene tree overhead. Renders using `BulletView` (`MultiMeshInstance2D`) with a single batched `RenderingServer` buffer upload per frame.
 
 ```
-BulletController (abstract)
-└── ServerBulletController   ← physics server + multimesh rendering
+BulletController2D           ← physics server + multimesh rendering
 
 BulletBatch                  ← manages a group of bullets (server path)
 
@@ -37,7 +36,7 @@ DespawnCondition (abstract)  ← defines when a bullet should be removed
 
 ### Setup
 
-1. Add a `ServerBulletController` node to your scene.
+1. Add a `BulletController2D` node to your scene.
 2. Create a `BulletConfig` resource and assign it to the controller's `Config` export:
    - Set a `Shape2D` for collision
    - Assign a `MovementConfig` (e.g. `LinearMovementConfig`)
@@ -48,7 +47,7 @@ DespawnCondition (abstract)  ← defines when a bullet should be removed
 5. Call `SpawnPattern` to fire:
 
 ```csharp
-BulletController.SpawnPattern(pattern, GlobalPosition, GlobalRotation);
+BulletController2D.SpawnPattern(pattern, GlobalPosition, GlobalRotation);
 ```
 
 ## Extending

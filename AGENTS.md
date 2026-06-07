@@ -36,8 +36,7 @@
 ```
 Scripts/
 ├── Core/                        ← Runtime controllers, batching, rendering
-│   ├── BulletController.cs      ← Abstract base (Node2D): SpawnPattern()
-│   ├── ServerBulletController.cs← Production path: PhysicsServer2D + MultiMesh
+│   ├── BulletController2D.cs    ← Concrete spawner: PhysicsServer2D + MultiMesh
 │   ├── BulletBatch.cs           ← Server-side bullet group (physics bodies + transforms)
 │   └── BulletView.cs            ← MultiMeshInstance2D: uploads transform buffer each frame
 │
@@ -65,16 +64,10 @@ main.tscn                       ← Main scene: wires both controllers + UI butt
 Main.cs                          ← Entry point: fires SpawnPattern on button press
 ```
 
-### Controller Design
-
-The system runs on the `ServerBulletController` production path, which manages bullets as raw physics bodies via `PhysicsServer2D` and renders them with `BulletView` (`MultiMeshInstance2D`).
+The system runs on the `BulletController2D` production path, which manages bullets as raw physics bodies via `PhysicsServer2D` and renders them with `BulletView` (`MultiMeshInstance2D`).
 
 
 
-### Key Design Patterns
-
-- **Strategy** — `MovementConfig.CreateStrategy()` returns an `IMovementStrategy` used per-frame for bullet movement. Implementations: `LinearMovementStrategy`, `CurveMovementStrategy`, `OscillateMovementStrategy`.
-- **Template Method** — `BulletController` defines the abstract `SpawnPattern()` contract; subclasses implement the actual spawning.
 - **Data-Driven Composition** — `BulletConfig` composes a `MovementConfig` + array of `DespawnCondition` resources. Everything is editable in the Godot inspector.
 - **Batch Processing** — `BulletBatch` processes all bullets in a tight loop each frame, then uploads a single float buffer to `RenderingServer`.
 - **Zero-Allocation Patterns** — `BulletPattern2D.FillBuffer(Span<Matrix3x2>, Matrix3x2)` fills a caller-provided buffer with world-space transforms, avoiding heap allocations on the spawn path. Small patterns (≤128 bullets) use `stackalloc`.
@@ -87,8 +80,8 @@ The system runs on the `ServerBulletController` production path, which manages b
 
 | Element              | Convention             | Example                         |
 | -------------------- | ---------------------- | ------------------------------- |
-| C# files             | PascalCase             | `BulletController.cs`           |
-| Classes              | PascalCase             | `ServerBulletController`        |
+| C# files             | PascalCase             | `BulletController2D.cs`         |
+| Classes              | PascalCase             | `BulletController2D`            |
 | Interfaces           | `I` prefix + PascalCase| `IMovementStrategy`             |
 | Godot resources      | PascalCase             | `BulletConfig`, `CirclePattern2D` |
 | Scenes               | PascalCase `.tscn`     | `Bullet.tscn`                   |
@@ -161,7 +154,7 @@ When adding new functionality, follow these patterns:
 
 5. **All `Resource` subclasses for the inspector must have `[GlobalClass]`** — otherwise they won't appear in the Godot editor's resource picker.
 
-6. **Use `PhysicsServer2D` and `RenderingServer` APIs in the server path** — do not add scene-tree nodes in `ServerBulletController` or `BulletBatch`. The entire point of the server path is zero scene-tree overhead.
+6. **Use `PhysicsServer2D` and `RenderingServer` APIs** — do not add scene-tree nodes in `BulletController2D` or `BulletBatch`. The entire point is zero scene-tree overhead.
 
 
 8. **Movement strategies must be stateless or per-bullet** — `IMovementStrategy.Calculate()` receives all state as parameters. Do not store mutable global state in strategy instances.
@@ -182,7 +175,7 @@ dotnet build "Bullet Controller (GDScript).csproj"
 # Open project.godot in Godot 4.6, press F5 (main scene: main.tscn)
 ```
 
-- **Main scene**: `main.tscn` — contains both controllers, a `BulletView`, and a UI button that fires `SpawnPattern`.
+- **Main scene**: `main.tscn` — contains the `BulletController2D` node, a `BulletView`, and a UI button that fires `SpawnPattern`.
 - **No unit test framework is configured** — testing is done via the Godot editor's play mode.
 - **vsync is disabled** (`window/vsync/vsync_mode=0`) and FPS printing is enabled (`settings/stdout/print_fps=true`) for performance profiling.
 
@@ -198,10 +191,10 @@ Vector2 Calculate(Vector2 position, float angle, float lifetime, float delta)
 
 Returns the **displacement vector** for a single frame. Called once per bullet per frame.
 
-### `BulletController` (abstract)
+### `BulletController2D`
 
 ```csharp
-abstract void SpawnPattern(BulletPattern2D pattern, Vector2 position, float rotation)
+void SpawnPattern(BulletPattern2D pattern, Vector2 position, float rotation)
 ```
 
 Spawns a batch of bullets according to the given pattern at the specified origin. Builds a `Matrix3x2` world matrix internally and delegates to `FillBuffer`.

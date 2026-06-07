@@ -2,7 +2,7 @@ using Godot;
 
 public partial class Main : Node2D
 {
-	[Export] BulletController ServerController;
+	[Export] BulletController2D ServerController;
 	[Export] BulletPattern2D Pattern2D;
 
 	public void OnButtonPressed()

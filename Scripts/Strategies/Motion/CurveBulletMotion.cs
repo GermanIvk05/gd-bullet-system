@@ -13,7 +13,7 @@ public partial class CurveBulletMotion : BulletMotion
 
     public override void Execute(
         Span<System.Numerics.Vector2> positions,
-        ReadOnlySpan<System.Numerics.Vector2> velocities,
+        Span<System.Numerics.Vector2> velocities,
         ReadOnlySpan<float> lifetimes,
         float delta
     )

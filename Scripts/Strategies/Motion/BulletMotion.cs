@@ -14,12 +14,12 @@ public abstract partial class BulletMotion : Resource
     /// Executes this motion over a batch of bullets.
     /// </summary>
     /// <param name="positions">The active positions span.</param>
-    /// <param name="velocities">The active velocities span.</param>
+    /// <param name="velocities">The active velocities span (modifiable for acceleration).</param>
     /// <param name="lifetimes">The active lifetimes span.</param>
     /// <param name="delta">The time elapsed since the last frame.</param>
     public abstract void Execute(
         Span<System.Numerics.Vector2> positions,
-        ReadOnlySpan<System.Numerics.Vector2> velocities,
+        Span<System.Numerics.Vector2> velocities,
         ReadOnlySpan<float> lifetimes,
         float delta
     );

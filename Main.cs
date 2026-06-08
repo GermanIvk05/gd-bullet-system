@@ -2,14 +2,10 @@ using Godot;
 
 public partial class Main : Node2D
 {
-	[Export] BulletController2D ServerController;
-	[Export] BulletPattern2D Pattern2D;
+	[Export] BulletSystem2D ServerController;
 
 	public void OnButtonPressed()
 	{
-		if (Pattern2D != null)
-		{
-			ServerController.SpawnPattern(Pattern2D, ServerController.GlobalPosition, ServerController.GlobalRotation);
-		}
+		ServerController.SpawnPattern(ServerController.GlobalPosition, ServerController.GlobalRotation);
 	}
 }

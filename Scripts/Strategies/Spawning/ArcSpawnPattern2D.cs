@@ -2,7 +2,7 @@ using System;
 using System.Numerics;
 
 [Godot.GlobalClass]
-public partial class ArcPattern2D : BulletPattern2D
+public partial class ArcSpawnPattern2D : SpawnPattern2D
 {
     [Godot.Export]
     public float Radius { get; set; } = 50f;
@@ -10,24 +10,24 @@ public partial class ArcPattern2D : BulletPattern2D
     [Godot.Export]
     public float SpreadAngle { get; set; } = 90f;
 
-    public override int FillBuffer(Span<Matrix3x2> buffer, Matrix3x2 worldMatrix)
+    public override int Execute(
+        Span<System.Numerics.Vector2> positions,
+        Span<System.Numerics.Vector2> velocities,
+        Matrix3x2 worldMatrix
+    )
     {
-        int count = Math.Min(BulletCount, buffer.Length);
+        int count = positions.Length;
         if (count == 0)
-        {
             return 0;
-        }
 
         // Extract the target angle from the world matrix rotation
         float targetAngle = MathF.Atan2(worldMatrix.M12, worldMatrix.M11);
 
         if (count == 1)
         {
-            var localPos = new Vector2(MathF.Cos(targetAngle), MathF.Sin(targetAngle)) * Radius;
-            var worldPos = Vector2.Transform(localPos, worldMatrix);
-
-            buffer[0] =
-                Matrix3x2.CreateRotation(targetAngle) * Matrix3x2.CreateTranslation(worldPos);
+            var dir = new Vector2(MathF.Cos(targetAngle), MathF.Sin(targetAngle));
+            positions[0] = Vector2.Transform(dir * Radius, worldMatrix);
+            velocities[0] = dir;
             return 1;
         }
 
@@ -38,11 +38,10 @@ public partial class ArcPattern2D : BulletPattern2D
         for (int i = 0; i < count; i++)
         {
             float angle = targetAngle - halfSpread + i * angleStep;
+            var dir = new Vector2(MathF.Cos(angle), MathF.Sin(angle));
 
-            var localPos = new Vector2(MathF.Cos(angle), MathF.Sin(angle)) * Radius;
-            var worldPos = Vector2.Transform(localPos, worldMatrix);
-
-            buffer[i] = Matrix3x2.CreateRotation(angle) * Matrix3x2.CreateTranslation(worldPos);
+            positions[i] = Vector2.Transform(dir * Radius, worldMatrix);
+            velocities[i] = dir;
         }
         return count;
     }

@@ -1,117 +1,102 @@
 # gd-bullet-system
 
-A high-performance bullet system for **Godot 4 (C#)** designed for bullet hell-style games. It separates bullet logic, physics, and rendering into distinct layers, and supports thousands of bullets via batched `MultiMeshInstance2D` rendering and direct `PhysicsServer2D` integration.
+A high-performance bullet system for **Godot 4 (C#)** designed for bullet hell-style games. It features an extreme KISS (Keep It Simple, Stupid) architecture focused purely on **kinematic simulation and visuals**. By completely dropping traditional Godot physics integration, it achieves massive scale and performance via pure C# Array-of-Structs (AoS)/Struct-of-Arrays (SoA) layout and SIMD acceleration.
 
 ## Architecture
 
-The system consists of:
+The system consists of a completely flattened data pipeline:
 
-**`BulletController2D`** — manages bullets as raw physics bodies via `PhysicsServer2D` with no scene tree overhead. Renders using `BulletView` (`MultiMeshInstance2D`) with a single batched `RenderingServer` buffer upload per frame.
+**`BulletSystem2D`** — The core engine node. It directly allocates and owns the primitive C# arrays (`Vector2[] _positions`, `Vector2[] _velocities`, `float[] _lifetimes`). It processes the simulation in tight loops and pushes the position data directly to a `BulletRenderer2D`.
 
 ```
-BulletController2D           ← physics server + multimesh rendering
+BulletSystem2D               ← the core Godot Node; owns memory arrays and _PhysicsProcess loop
+BulletRenderer2D             ← MultiMeshInstance2D: uploads Vector2 span directly to rendering server
 
-BulletBatch                  ← manages a group of bullets (server path)
-
-BulletConfig                 ← exported resource: shape, damage, movement, despawn, collision
-BulletPattern2D (abstract)   ← defines zero-allocation spawn transform buffers
-MovementConfig (abstract)    ← defines per-frame movement behaviour
-DespawnCondition (abstract)  ← defines when a bullet should be removed
+BulletMotion (abstract)      ← Godot Resource: calculates positions using Span data and SIMD intrinsics
+SpawnPattern2D (abstract)    ← Godot Resource: writes spawn locations and velocities into Spans
 ```
 
 ## Features
 
+- **Pure Mathematical Kinematics** — Zero Godot physics overhead (no `Rid` allocations, no `PhysicsServer2D` syncing)
+- **SIMD Acceleration** — Leverages native `System.Numerics.Vector<T>` and AVX2 hardware intrinsics via `SimdMath.cs`
 - **Batched rendering** via `RenderingServer.MultimeshSetBuffer` — one native call per frame regardless of bullet count
-- **PhysicsServer2D** kinematic bodies for collision without scene tree nodes
-- **Strategy pattern** for movement — swap between `LinearMovementConfig`, `OscillateMovementConfig`, or write your own
-- **Composable despawn conditions** — combine multiple conditions per bullet type (e.g. lifetime + out-of-bounds)
-- **Pluggable spawn patterns** — `CirclePattern2D`, `ArcPattern2D`, or implement `BulletPattern2D` for custom layouts
-- **Data-driven configuration** — everything is a Godot `Resource`, editable in the inspector
+- **Zero-Allocation Strategies** — `BulletMotion` and `SpawnPattern2D` implementations accept raw `Span<T>` for maximum performance
+- **Data-driven configuration** — Swappable movement algorithms (`LinearBulletMotion`, `OscillateBulletMotion`) configured in the inspector
 
 ## Getting Started
 
 ### Requirements
 
 - Godot 4.x with C# (.NET) support
+- .NET 8.0 SDK
 
 ### Setup
 
-1. Add a `BulletController2D` node to your scene.
-2. Create a `BulletConfig` resource and assign it to the controller's `Config` export:
-   - Set a `Shape2D` for collision
-   - Assign a `MovementConfig` (e.g. `LinearMovementConfig`)
-   - Add one or more `DespawnCondition` resources (e.g. `LifetimeDespawnCondition`)
-   - Set collision layer and mask as needed
-3. Assign a `BulletView` (`MultiMeshInstance2D`) to the `View` export.
-4. Create a `BulletPattern2D` resource (e.g. `CirclePattern2D` or `ArcPattern2D`).
+1. Add a `BulletSystem2D` node to your scene.
+2. In the inspector, assign your configuration directly to the `BulletSystem2D`:
+   - Assign a `Movement` resource (e.g. `LinearBulletMotion`)
+   - Set the `MaxLifetime`
+3. Assign a `BulletRenderer2D` (`MultiMeshInstance2D` subclass) to the `View` export.
+4. Assign a `SpawnPattern2D` resource to the `Pattern` export.
 5. Call `SpawnPattern` to fire:
 
 ```csharp
-BulletController2D.SpawnPattern(pattern, GlobalPosition, GlobalRotation);
+BulletSystem2D.SpawnPattern(GlobalPosition, GlobalRotation);
 ```
 
 ## Extending
 
 ### Custom movement
 
+Create a new Godot Resource inheriting from `BulletMotion`. You receive direct access to the memory spans:
+
 ```csharp
+using System;
+using Godot;
+
 [GlobalClass]
-public partial class HomingMovementConfig : MovementConfig
+public partial class CustomHomingMotion : BulletMotion
 {
-    [Export] public float Speed { get; set; } = 200f;
+    [Export] public float TurnSpeed { get; set; } = 5f;
 
-    public override IMovementStrategy CreateStrategy() => new HomingMovementStrategy(Speed);
-}
-
-public class HomingMovementStrategy : IMovementStrategy
-{
-    private float _speed;
-    public HomingMovementStrategy(float speed) => _speed = speed;
-
-    public Vector2 Calculate(Vector2 position, float angle, float lifetime, float delta)
+    public override void Execute(Span<System.Numerics.Vector2> positions, ReadOnlySpan<System.Numerics.Vector2> velocities, ReadOnlySpan<float> lifetimes, float delta)
     {
-        // custom logic here
-        return Vector2.FromAngle(angle) * _speed * delta;
+        for (int i = 0; i < positions.Length; i++)
+        {
+            // Perform custom homing math directly on the vectors here
+            positions[i] += velocities[i] * Speed * delta;
+        }
     }
 }
 ```
 
-### Custom despawn condition
-
-```csharp
-[GlobalClass]
-public partial class OutOfBoundsDespawnCondition : DespawnCondition
-{
-    [Export] public Rect2 Bounds { get; set; }
-
-    public override bool ShouldDespawn(Vector2 position, float angle, float lifetime)
-        => !Bounds.HasPoint(position);
-}
-```
-
 ### Custom pattern
+
+Create a new pattern inheriting from `SpawnPattern2D`:
 
 ```csharp
 using System;
 using System.Numerics;
 
 [Godot.GlobalClass]
-public partial class SpiralPattern2D : BulletPattern2D
+public partial class CustomSpiralPattern : SpawnPattern2D
 {
     [Godot.Export] public float Radius { get; set; } = 10f;
 
-    public override int FillBuffer(Span<Matrix3x2> buffer, Matrix3x2 worldMatrix)
+    public override int Execute(Span<Vector2> positions, Span<Vector2> velocities, Matrix3x2 worldMatrix)
     {
-        int count = Math.Min(BulletCount, buffer.Length);
+        int count = positions.Length;
         if (count == 0) return 0;
 
         float step = MathF.Tau / count;
         for (int i = 0; i < count; i++)
         {
             float angle = i * step;
-            var localPos = new Vector2(MathF.Cos(angle), MathF.Sin(angle)) * (Radius * (i / (float)count));
-            var worldPos = Vector2.Transform(localPos, worldMatrix);
-            buffer[i] = Matrix3x2.CreateRotation(angle) * Matrix3x2.CreateTranslation(worldPos);
+            var dir = new Vector2(MathF.Cos(angle), MathF.Sin(angle));
+            
+            positions[i] = Vector2.Transform(dir * Radius, worldMatrix);
+            velocities[i] = dir;
         }
         return count;
     }

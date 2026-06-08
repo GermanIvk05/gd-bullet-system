@@ -2,7 +2,7 @@ using System;
 using Godot;
 
 [GlobalClass]
-public partial class BulletView : MultiMeshInstance2D
+public partial class BulletRenderer2D : MultiMeshInstance2D
 {
     private float[] _buffer = [];
 

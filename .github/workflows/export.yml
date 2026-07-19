@@ -1,0 +1,52 @@
+name: Build & Release
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Export and Publish
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Build C# Assembly
+        run: dotnet build --configuration Release
+
+      - name: Export Godot Builds
+        id: export
+        uses: firebelley/godot-export@v5.2.1
+        with:
+          godot_executable_download_url: https://github.com/godotengine/godot/releases/download/4.6-stable/Godot_v4.6-stable_mono_linux_x86_64.zip
+          godot_export_templates_download_url: https://github.com/godotengine/godot/releases/download/4.6-stable/Godot_v4.6-stable_mono_export_templates.tpz
+          relative_project_path: ./
+          archive_output: true
+          cache: true
+
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: BulletSystem-Builds
+          path: ${{ steps.export.outputs.archive_directory }}/*.zip
+
+      - name: Publish to GitHub Releases
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_type == 'tag' && github.ref_name || 'latest' }}
+          name: ${{ github.ref_type == 'tag' && format('Release {0}', github.ref_name) || 'Latest Build' }}
+          prerelease: ${{ github.ref_type != 'tag' }}
+          make_latest: ${{ github.ref_type == 'tag' }}
+          files: ${{ steps.export.outputs.archive_directory }}/*.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

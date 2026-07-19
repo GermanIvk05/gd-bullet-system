@@ -2,12 +2,26 @@ using System;
 using System.Numerics;
 using System.Runtime.InteropServices;
 
+/// <summary>
+/// Data Layer — static class providing SIMD-accelerated math helpers used by
+/// the bullet simulation system.
+/// </summary>
+/// <remarks>
+/// All methods in this class are pure functions: they only read their input
+/// parameters and write to the output/in-place Span arguments.  No state is
+/// cached, no Godot types are used.<br/><br/>
+/// Rule 5.3: uses <c>System.Numerics.Vector&lt;float&gt;</c> hardware intrinsics
+/// (AVX2 / SSE2 / NEON depending on the runtime) for the vectorised inner loops.
+/// </remarks>
 public static class SimdMath
 {
     /// <summary>
-    /// SIMD Accelerated: Adds a scalar value to every element in the span.
-    /// Equivalent to: data[i] += scalar
+    /// SIMD-accelerated: adds <paramref name="scalar"/> to every element of
+    /// <paramref name="data"/> in-place.
+    /// Equivalent to: <c>data[i] += scalar</c> for all i.
     /// </summary>
+    /// <param name="data">The span of floats to modify in-place.</param>
+    /// <param name="scalar">The value to add to each element.</param>
     public static void AddScalar(Span<float> data, float scalar)
     {
         int vectorSize = Vector<float>.Count;
@@ -21,7 +35,7 @@ public static class SimdMath
             (vec + scalarVec).CopyTo(slice);
         }
 
-        // Remainder
+        // Scalar remainder for elements that don't fill a full SIMD register.
         for (; i < data.Length; i++)
         {
             data[i] += scalar;
@@ -29,10 +43,17 @@ public static class SimdMath
     }
 
     /// <summary>
-    /// SIMD Accelerated: Adds (b * scalar) to a.
-    /// Equivalent to: a[i] += b[i] * scalar
-    /// Note: This natively handles Vector2 spans by casting them to flat float spans.
+    /// SIMD-accelerated: adds <c>b[i] * scalar</c> to <c>a[i]</c> for all i
+    /// (fused multiply-add over Vector2 spans).
+    /// Equivalent to: <c>a[i] += b[i] * scalar</c> for all i.
     /// </summary>
+    /// <remarks>
+    /// The Vector2 spans are reinterpreted as flat float spans so the SIMD
+    /// register can process two components at a time without extra packing.
+    /// </remarks>
+    /// <param name="a">Destination span modified in-place (positions).</param>
+    /// <param name="b">Source span (velocities).</param>
+    /// <param name="scalar">Scale factor (delta time).</param>
     public static void MultiplyAdd(Span<Vector2> a, ReadOnlySpan<Vector2> b, float scalar)
     {
         var aFloat = MemoryMarshal.Cast<Vector2, float>(a);
@@ -53,7 +74,7 @@ public static class SimdMath
             (aVec + bVec * scalarVec).CopyTo(aSlice);
         }
 
-        // Remainder
+        // Scalar remainder.
         for (; i < aFloat.Length; i++)
         {
             aFloat[i] += bFloat[i] * scalar;
@@ -61,9 +82,19 @@ public static class SimdMath
     }
 
     /// <summary>
-    /// Rotates a span of velocity direction vectors by an angle (in degrees) and applies a speed multiplier.
-    /// Used during bullet spawning.
+    /// Rotates a span of velocity direction vectors by
+    /// <paramref name="directionDegrees"/> degrees and scales them by
+    /// <paramref name="speed"/>.  Used once per spawn call to bake the
+    /// spawner's intended direction and speed into the velocity buffer.
     /// </summary>
+    /// <param name="velocities">
+    /// Unit direction vectors written by a <see cref="SpawnPattern2D"/>;
+    /// modified in-place to become the final velocity vectors.
+    /// </param>
+    /// <param name="speed">The bullet speed (units/second).</param>
+    /// <param name="directionDegrees">
+    /// Additional rotational offset in degrees (0 = no extra rotation).
+    /// </param>
     public static void ApplySpeedAndRotation(
         Span<Vector2> velocities,
         float speed,
@@ -75,6 +106,7 @@ public static class SimdMath
 
         if (directionDegrees == 0f)
         {
+            // Fast path: no rotation, just apply speed.
             for (int i = 0; i < velocities.Length; i++)
             {
                 velocities[i] *= speed;

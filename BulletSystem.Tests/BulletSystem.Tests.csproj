@@ -1,0 +1,53 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <RootNamespace>BulletSystem.Tests</RootNamespace>
+    <!--
+      Rule 8: tests must be runnable without Godot. We compile the game source
+      directly into this project as linked files so there is no Godot runtime
+      dependency at test time.  All Godot types used by the pure-logic layer are
+      excluded via conditional compilation.
+    -->
+  </PropertyGroup>
+
+  <!-- xUnit framework -->
+  <ItemGroup>
+    <PackageReference Include="xunit" Version="2.9.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
+  </ItemGroup>
+
+  <!--
+    Include only the Pure Game Logic and Data layer source files that have no
+    Godot Node dependency (Rule 8 – never deserialize scenes or load resources).
+
+    SimdMath has zero Godot dependencies → can be compiled directly.
+    The strategy Execute() methods use System.Numerics.Vector2 only → safe.
+
+    We provide a minimal stub for the Godot types used in the abstract base
+    classes (Resource, GlobalClassAttribute, ExportAttribute) so the compiler
+    is satisfied.  See Tests/Stubs/GodotStubs.cs.
+  -->
+  <ItemGroup>
+    <!-- Data layer -->
+    <Compile Include="../Scripts/System/SimdMath.cs" />
+
+    <!-- Pure game logic layer — abstract base contracts -->
+    <Compile Include="../Scripts/Strategies/Motion/BulletMotion.cs" />
+    <Compile Include="../Scripts/Strategies/Spawning/SpawnPattern2D.cs" />
+
+    <!-- Pure game logic layer — concrete strategies -->
+    <Compile Include="../Scripts/Strategies/Motion/LinearBulletMotion.cs" />
+    <Compile Include="../Scripts/Strategies/Motion/CurveBulletMotion.cs" />
+    <Compile Include="../Scripts/Strategies/Motion/OscillateBulletMotion.cs" />
+    <Compile Include="../Scripts/Strategies/Spawning/CircleSpawnPattern2D.cs" />
+    <Compile Include="../Scripts/Strategies/Spawning/ArcSpawnPattern2D.cs" />
+  </ItemGroup>
+
+</Project>

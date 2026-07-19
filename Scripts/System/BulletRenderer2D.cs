@@ -1,9 +1,20 @@
 using System;
 using Godot;
 
-[GlobalClass]
+/// <summary>
+/// Visual Layer — Renders all active bullets in a single draw call via MultiMesh.
+/// This component is stateless with respect to game logic: it only accepts a
+/// pre-built transform buffer and pushes it to the GPU.
+/// </summary>
+/// <remarks>
+/// Per Rule 6.3: the only operation permitted in the render path is writing the
+/// caller-supplied <c>ReadOnlySpan&lt;float&gt;</c> transform buffer to the GPU via
+/// <c>RenderingServer.MultimeshSetBuffer</c>. Buffer construction is the caller's
+/// responsibility (<see cref="BulletSystem2D"/>).
+/// </remarks>
 public partial class BulletRenderer2D : MultiMeshInstance2D
 {
+    // Internal staging array — avoids a heap allocation every frame.
     private float[] _buffer = [];
 
     public override void _Ready()
@@ -11,35 +22,48 @@ public partial class BulletRenderer2D : MultiMeshInstance2D
         Multimesh.CustomAabb = new Aabb(Vector3.One * -1e6f, Vector3.One * 2e6f);
     }
 
-    public void Update(ReadOnlySpan<Vector2> positions)
+    public override void _ExitTree()
     {
-        UpdateCapacity(positions.Length);
-        Multimesh.VisibleInstanceCount = positions.Length;
+        // Release the staging buffer so the GC can reclaim it when the renderer leaves
+        // the scene tree (Rule 3.4: cleanup in _ExitTree).
+        _buffer = [];
+    }
 
-        if (positions.IsEmpty)
+    /// <summary>
+    /// Submits a pre-built transform buffer to the GPU and updates the visible
+    /// instance count.  Each instance occupies 8 floats in row-major Transform2D
+    /// layout: [ xx, yx, pad, ox, xy, yy, pad, oy ].
+    /// </summary>
+    /// <param name="transformBuffer">
+    /// Flat array of 8 floats per bullet instance.  Must be exactly
+    /// <c>instanceCount * 8</c> floats long, or empty to hide all instances.
+    /// </param>
+    public void Update(ReadOnlySpan<float> transformBuffer)
+    {
+        int instanceCount = transformBuffer.Length / 8;
+        UpdateCapacity(instanceCount);
+        Multimesh.VisibleInstanceCount = instanceCount;
+
+        if (transformBuffer.IsEmpty)
             return;
 
-        int instanceCount = Multimesh.InstanceCount;
-        int required = instanceCount * 8;
+        // Ensure the staging array matches the full multimesh size (not just visible).
+        int required = Multimesh.InstanceCount * 8;
         if (_buffer.Length != required)
         {
             _buffer = new float[required];
         }
 
-        for (int i = 0; i < positions.Length; i++)
-        {
-            int offset = i * 8;
-            _buffer[offset + 0] = 1; // x.x
-            _buffer[offset + 1] = 0; // y.x
-            _buffer[offset + 2] = 0; // pad
-            _buffer[offset + 3] = positions[i].X; // origin.x
-            _buffer[offset + 4] = 0; // x.y
-            _buffer[offset + 5] = 1; // y.y
-            _buffer[offset + 6] = 0; // pad
-            _buffer[offset + 7] = positions[i].Y; // origin.y
-        }
+        // Copy only the visible portion of the buffer; the remainder is stale but
+        // invisible due to VisibleInstanceCount.
+        transformBuffer.CopyTo(_buffer.AsSpan(0, transformBuffer.Length));
+
         RenderingServer.MultimeshSetBuffer(Multimesh.GetRid(), _buffer);
     }
+
+    // -------------------------------------------------------------------------
+    // Private helpers
+    // -------------------------------------------------------------------------
 
     private void UpdateCapacity(int count)
     {

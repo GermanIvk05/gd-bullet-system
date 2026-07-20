@@ -7,9 +7,12 @@ namespace BulletSystem.Tests.Strategies.Motion;
 /// <summary>
 /// Unit tests for <see cref="CurveBulletMotion"/> (Pure Game Logic Layer).
 /// Rule 8: Tests pass fabricated Span&lt;T&gt; buffers directly; no Godot nodes instantiated.
-/// The <c>SpeedCurve</c> is exercised via the null-fallback path (multiplier = 1),
-/// because <c>Godot.Curve.SampleBaked</c> is not available without the Godot runtime.
 /// </summary>
+/// <remarks>
+/// MO3: The <c>Godot.Curve</c> stub in <c>GodotStubs.cs</c> implements
+/// <c>SampleBaked(t) =&gt; t</c> (identity), which lets us also exercise the
+/// non-null SpeedCurve code path with deterministic expected values.
+/// </remarks>
 public class CurveBulletMotionTest
 {
     private static CurveBulletMotion CreateStrategy(float speed = 100f, float duration = 1f) =>
@@ -88,5 +91,33 @@ public class CurveBulletMotionTest
 
         // CurveBulletMotion must never modify the velocity buffer.
         Assert.Equal(originalVel, velocities[0]);
+    }
+
+    [Fact]
+    public void Execute_NonNullCurveStub_ScalesPositionByT()
+    {
+        // MO3: exercise the non-null SpeedCurve branch using the test stub's identity
+        // SampleBaked implementation: SampleBaked(t) = t.
+        //
+        // With lifetime = 0.5s and CurveDuration = 1.0s:
+        //   t = 0.5 / 1.0 = 0.5
+        //   multiplier = SampleBaked(0.5) = 0.5  (stub identity)
+        //   expected Δx = velocity.X * multiplier * delta = 100 * 0.5 * 1.0 = 50
+        var strategy = new CurveBulletMotion
+        {
+            Speed = 100f,
+            DirectionAngle = 0f,
+            SpeedCurve = new Godot.Curve(), // stub SampleBaked(t) => t
+            CurveDuration = 1.0f
+        };
+
+        Span<Vector2> positions = [Vector2.Zero];
+        Span<Vector2> velocities = [new Vector2(100f, 0f)];
+        ReadOnlySpan<float> lifetimes = [0.5f];
+
+        strategy.Execute(positions, velocities, lifetimes, delta: 1.0f);
+
+        Assert.Equal(50f, positions[0].X, precision: 4);
+        Assert.Equal(0f, positions[0].Y, precision: 4);
     }
 }

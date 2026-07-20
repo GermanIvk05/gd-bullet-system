@@ -1,5 +1,6 @@
 using System;
 using System.Numerics;
+using Godot;
 
 /// <summary>
 /// Pure Game Logic Layer — spawn pattern that distributes bullets evenly across
@@ -14,15 +15,15 @@ using System.Numerics;
 /// The velocities written are unit direction vectors.  Speed is applied by the
 /// caller via <c>SimdMath.ApplySpeedAndRotation</c>.
 /// </remarks>
-[Godot.GlobalClass]
+[GlobalClass]
 public partial class ArcSpawnPattern2D : SpawnPattern2D
 {
     /// <summary>The spawn offset radius from the spawner origin (world units).</summary>
-    [Godot.Export]
+    [Export]
     public float Radius { get; set; } = 50f;
 
     /// <summary>The total angular spread of the arc in degrees (e.g. 90 = quarter circle).</summary>
-    [Godot.Export]
+    [Export]
     public float SpreadAngle { get; set; } = 90f;
 
     /// <inheritdoc/>

@@ -1,5 +1,6 @@
 using System;
 using System.Numerics;
+using Godot;
 
 /// <summary>
 /// Pure Game Logic Layer — spawn pattern that distributes bullets uniformly in
@@ -11,11 +12,11 @@ using System.Numerics;
 /// The velocities written are unit direction vectors pointing outward from the
 /// centre.  Speed is applied by the caller via <c>SimdMath.ApplySpeedAndRotation</c>.
 /// </remarks>
-[Godot.GlobalClass]
+[GlobalClass]
 public partial class CircleSpawnPattern2D : SpawnPattern2D
 {
     /// <summary>The radius of the spawn circle in world units.</summary>
-    [Godot.Export]
+    [Export]
     public float Radius { get; set; } = 50f;
 
     /// <inheritdoc/>

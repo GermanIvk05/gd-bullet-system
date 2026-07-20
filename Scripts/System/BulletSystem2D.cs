@@ -90,9 +90,9 @@ public partial class BulletSystem2D : Node2D
     /// Spawns a burst of bullets using the configured <see cref="Pattern"/> and
     /// <see cref="Movement"/> strategies.
     /// </summary>
-    /// <param name="position">World-space spawn origin.</param>
+    /// <param name="position">World-space spawn origin (System.Numerics.Vector2 — Rule 7.6).</param>
     /// <param name="rotation">World-space rotation of the spawner (radians).</param>
-    public void SpawnPattern(Godot.Vector2 position, float rotation)
+    public void SpawnPattern(Vector2 position, float rotation)
     {
         if (Pattern == null || Movement == null)
             return;
@@ -149,6 +149,8 @@ public partial class BulletSystem2D : Node2D
 
         // 4. Build the GPU transform buffer then hand it to the renderer.
         //    Rule 6.2/6.3: BulletRenderer2D receives a ReadOnlySpan<float> only.
+        //    The null guard below is a defensive null-safety check for the exported
+        //    View property, not bullet-type branching (Rule 4.3 permits this).
         if (View != null)
         {
             var activePosSpan = _positions.AsSpan(0, _activeCount);
@@ -195,6 +197,12 @@ public partial class BulletSystem2D : Node2D
     /// Layout per instance (8 floats):
     /// [ xx=1, yx=0, pad=0, ox, xy=0, yy=1, pad=0, oy ]
     /// </summary>
+    /// <remarks>
+    /// MO2 / Rule 5.3: This loop is currently scalar because the stride-8 interleaved
+    /// layout prevents a trivial <c>Vector&lt;float&gt;</c> vectorisation.  A future AVX2
+    /// path using gather/scatter intrinsics (<c>Avx2.GatherVector256</c>) could pack
+    /// multiple instances per cycle if profiling shows this to be a bottleneck.
+    /// </remarks>
     private static void BuildTransformBuffer(
         ReadOnlySpan<Vector2> positions,
         Span<float> buffer)
@@ -213,7 +221,7 @@ public partial class BulletSystem2D : Node2D
         }
     }
 
-    private static Matrix3x2 BuildWorldMatrix(Godot.Vector2 position, float rotation)
+    private static Matrix3x2 BuildWorldMatrix(Vector2 position, float rotation)
     {
         return Matrix3x2.CreateRotation(rotation)
             * Matrix3x2.CreateTranslation(position.X, position.Y);

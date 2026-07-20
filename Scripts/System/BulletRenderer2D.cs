@@ -70,10 +70,15 @@ public partial class BulletRenderer2D : MultiMeshInstance2D
         int capacity = Multimesh.InstanceCount;
         if (count > capacity)
         {
+            // Grow immediately (any overflow) to avoid stalling the GPU.
             Multimesh.InstanceCount = Mathf.Max(count, capacity * 2);
         }
         else if (count < capacity / 4)
         {
+            // Shrink only when count drops below 25% of capacity.
+            // This intentional hysteresis (grow-at-0%, shrink-at-25%) prevents
+            // rapid oscillation between grow and shrink when bullet count fluctuates
+            // near a power-of-two boundary.
             Multimesh.InstanceCount = Mathf.Max(count, capacity / 2);
         }
     }

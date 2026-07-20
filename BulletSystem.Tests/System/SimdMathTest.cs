@@ -170,4 +170,22 @@ public class SimdMathTest
         Assert.Equal(0f, vels[0].X, precision: 3);
         Assert.Equal(200f, vels[0].Y, precision: 3);
     }
+
+    [Fact]
+    public void ApplySpeedAndRotation_ZeroRotation_LargeSpanSimdPath()
+    {
+        // Verify the new SIMD-vectorised zero-rotation fast-path over a large span
+        // (512 elements exercises multiple SIMD register widths + the scalar remainder).
+        const int count = 512;
+        var vels = new Vector2[count];
+        Array.Fill(vels, new Vector2(1f, 0f));
+
+        SimdMath.ApplySpeedAndRotation(vels.AsSpan(), 150f, 0f);
+
+        foreach (var v in vels)
+        {
+            Assert.Equal(150f, v.X, precision: 4);
+            Assert.Equal(0f, v.Y, precision: 4);
+        }
+    }
 }

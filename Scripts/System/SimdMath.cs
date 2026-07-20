@@ -106,14 +106,32 @@ public static class SimdMath
 
         if (directionDegrees == 0f)
         {
-            // Fast path: no rotation, just apply speed.
-            for (int i = 0; i < velocities.Length; i++)
+            // Fast path (Rule 5.3): no rotation — SIMD-vectorised scalar multiply.
+            // Reinterpret the Vector2 span as a flat float span so we can use
+            // Vector<float> over both X and Y components simultaneously.
+            var floats = MemoryMarshal.Cast<Vector2, float>(velocities);
+            int vectorSize = Vector<float>.Count;
+            var speedVec = new Vector<float>(speed);
+
+            int i = 0;
+            for (; i <= floats.Length - vectorSize; i += vectorSize)
             {
-                velocities[i] *= speed;
+                var slice = floats.Slice(i, vectorSize);
+                var vec = new Vector<float>(slice);
+                (vec * speedVec).CopyTo(slice);
             }
+            // Scalar remainder.
+            for (; i < floats.Length; i++)
+                floats[i] *= speed;
+
             return;
         }
 
+        // Rotation path: compute the 2×2 rotation matrix once then apply per-bullet.
+        // NOTE (MO1 / Rule 5.3): a full SIMD path for the rotation case is achievable
+        // by broadcasting (cos, sin) into interleaved float vectors and applying the
+        // rotation formula without branching.  Left as a future optimisation — profiling
+        // must confirm this is a hot-enough path to justify the complexity.
         float rad = directionDegrees * MathF.PI / 180f;
         float cos = MathF.Cos(rad);
         float sin = MathF.Sin(rad);

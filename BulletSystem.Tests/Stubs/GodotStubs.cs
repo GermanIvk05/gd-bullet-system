@@ -53,6 +53,6 @@ namespace Godot
     }
 }
 
-// Top-level alias so files using [GlobalClass] without the Godot namespace qualifier compile.
-[AttributeUsage(AttributeTargets.Class, Inherited = false)]
-internal sealed class GlobalClassAttribute : Attribute { }
+// All source files in the test project include `using Godot;`, so [GlobalClass]
+// and [Export] resolve to the Godot-namespace stubs above without any top-level
+// alias being needed.

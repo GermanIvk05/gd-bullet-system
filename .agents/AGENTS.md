@@ -1,32 +1,34 @@
-# Project Tech Stack
+# Agent Configurations & Rules (`.agents`)
 
-This document defines the technology stack and tooling guidelines for AI agents working on this project.
+This directory contains the operational rules, architectural guidelines, and methodology standards for AI agents working in Godot C# codebases.
 
-## Core Technologies
+---
 
-* **Game Engine**: Godot 4.x (Mono C# Edition)
-* **Programming Language**: C# 12 / .NET 8.0
-* **Build System**: SCons (Godot internal) / MSBuild (`dotnet build`)
+## Directory Overview
 
-## Architecture & Framework Suite
+```
+.agents/
+├── AGENTS.md                   ← (This file) Overview and index of agent configurations
+└── rules/                      ← Modular rule definitions evaluated against matching paths
+    ├── godot-architecture.md   ← Architectural standards (4-layer architecture, coupling, performance)
+    └── tdd.md                  ← Test-Driven Development workflow (Red-Green-Refactor, test isolation)
+```
 
-We rely heavily on the **Chickensoft** ecosystem to enforce clean, testable, and decoupled code patterns in Godot C#:
+---
 
-* **Dependency Injection (`Chickensoft.AutoInject`)**
-  * Implements tree-based ancestor injection. Nodes provide dependencies down the tree using `this.Provide()`, and child nodes resolve them via `[Dependency]` and `this.DependOn<T>()`.
-  * Mixin-based lookup activated via `[Meta(typeof(IAutoNode))]` and overriding `_Notification` with `this.Notify(what)`.
+## Agent Rule Files (`.agents/rules/`)
 
-* **Metadata & Mixins (`Chickensoft.Introspection`)**
-  * A source-generator-based compile-time alternative to dynamic reflection. Essential for AutoInject mixins and mockable setups.
+All rule files in `.agents/rules/` include YAML frontmatter specifying file path glob patterns. When working on matching files, AI agents must strictly follow the corresponding rule file:
 
-* **Mockable Node Interfaces (`Chickensoft.GodotNodeInterfaces`)**
-  * Auto-generated interfaces for native Godot nodes (e.g., `ISprite2D`, `INode2D`). Allows us to unit test Visual and Visual Game Logic layer scripts without instantiating actual engine objects or scene files.
+| Rule File | Target Paths | Description |
+| --------- | ------------ | ----------- |
+| [godot-architecture.md](file:///.agents/rules/godot-architecture.md) | `**/*.cs`, `**/*.tscn` | Enforces 4-layer architecture (Visual, Visual Game Logic, Pure Game Logic, Data), feature-based file organization, passive view separation, performance batching, and critical Godot C# standards. |
+| [tdd.md](file:///.agents/rules/tdd.md) | `**/*.cs`, `**/Tests/**/*.cs`, `**/*Test.cs`, `**/*Tests.cs` | Enforces Red–Green–Refactor TDD cycle, test isolation without Godot scene tree dependencies, AAA test structure, expressive test naming, bug reproduction, and mandatory `dotnet test` empirical verification. |
 
-## Project Abstraction Layers
+---
 
-We strictly adhere to a 4-layer architecture defined in [.agents/rules/bullet-architecture.md](file:///.agents/rules/bullet-architecture.md):
+## Maintenance & Extension Guidelines
 
-1. **Visual Layer** (Passive `Node2D`, `MultiMeshInstance2D`, etc. - no logic, reacts to inputs/outputs).
-2. **Visual Game Logic Layer** (Demo scenes, `BulletSystem2D` node - coordinates visual elements, forwards events).
-3. **Pure Game Logic Layer** (Plain C# classes like strategy resources - implements bullet rules, motion calculations, and spawn domain logic).
-4. **Data Layer** (Static services, configurations like `BulletMotion` and `SpawnPattern2D` resources carrying shared state).
+1. **Keep Rules Modular**: Place specific rules into dedicated `.md` files under `.agents/rules/` rather than bloating root config files.
+2. **Specify Path Scopes**: Always include YAML frontmatter `paths` at the top of new rule files so agents know when the rules apply.
+3. **Generic & Portable**: Ensure rules remain generic across Godot C# projects so they can be reused across repositories.
